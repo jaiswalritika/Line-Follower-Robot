@@ -1,0 +1,545 @@
+const kp : int = 3
+const kd : int = 1
+
+
+
+node counter(sen0, sen1, sen2, sen3, sen4: int; beacon: int; flag: bool) returns (finalcount: int )
+var 
+	last c: int = 0; 
+	last bcount: int = 0;
+	last flg: bool = false; 
+let
+	finalcount = c;
+	flg = flag;
+	automaton
+		state Initial
+			do c = last c;
+			   bcount = 0;
+		unless(flag and (sen1 + sen2 + sen3 < 2250)) continue CountIncrement
+		
+		state CountIncrement
+			do 
+			   c = last c + 1;
+			   bcount = 0;
+		until true then WaitForNextIncrement
+		
+		state WaitForNextIncrement
+			do 	
+			   bcount = last bcount + beacon;
+			   c = last c;
+			  
+		unless (flag and last bcount > 1) continue Initial
+	end
+tel
+
+
+
+node main(sen0, sen1, sen2, sen3, sen4, ir_d_front: int; leftforwardDetection, leftbackwardDetection, rightforwardDetection, rightbackwardDetection: bool; beacon, second: int) returns (v_l, v_r, dir : int ; last cnt : int)
+var pid, wspeed, bspeed, pspeed, oasspeed, count:int; 
+    flag: bool;
+    last leftflag1:int = 0;
+    last rightflag1:int= 0;
+    last leftflag2:int= 0;
+    last rightflag2:int= 0;
+    last leftflag3:int= 0;
+    last rightflag3:int=0;
+    c1, c2, c3, c4, c5, blacknodedetected, b3, b4, b5, switch_condition:bool;
+    last timer: int;
+    last timer1: int;
+    last rightturn_count:int;
+
+let
+
+    pid = findpid(sen3,sen1);
+    c1 = (sen0 + sen1 + sen2 + sen3 + sen4) > 4500;
+    c2 = ((sen0*18)/10) > 900;
+    c3 = sen4>900;
+    c4 = sen1>900 and sen2 < 800;
+    c5 = sen3>900 and sen2 < 800; 
+    switch_condition = (sen2 < 700) and (sen4 > 800) and (sen0 + sen1 > 1400); 
+    wspeed = 50 ;
+    oasspeed = 40 ;
+    pspeed = 50 ;
+    blacknodedetected = (sen0 + sen1 + sen2 + sen3 + sen4) < 3000;
+    b3 = sen4<700;
+    b4 = (sen1<700 and sen2 > 700) ;
+    b5 = (sen3<700 and sen2 > 700) ;
+    count = counter(sen0, sen1, sen2, sen3, sen4, beacon, flag);
+    cnt = count;
+    bspeed = if (count>1) then 50 else 30;
+
+    automaton
+        -- White Line Following
+        
+        state Forward
+        do  
+            v_l = wspeed ;
+            v_r = wspeed ;
+            flag = false;
+            dir = 1 ;
+        until switch_condition then BlackForward 
+            | c2 then Left
+            | c3 then Right
+            | c4 then DriftRight
+            | c5 then DriftLeft
+
+        state Stop
+        do
+            v_l = 0 ;
+            v_r = 0 ;
+            flag = false;
+            dir = 0 ;
+        until
+            | switch_condition then BlackForward
+            | not c1 and c2 then Left
+            | c3 then Right
+            | c4 then DriftRight
+            | c5 then DriftLeft
+            | true then Forward
+
+        state Left
+        do
+            v_l = wspeed ;
+            v_r = wspeed ;
+            flag = false;
+            dir = 4 ;
+        until c1 then Stop
+            | switch_condition then BlackForward
+            | c3 then Right
+            | c4 then DriftRight
+            | c5 then DriftLeft
+            | true then Forward
+
+        state Right
+        do
+            v_l = wspeed ;
+            v_r = wspeed ;
+            flag = false;
+            dir = 5 ;
+        until c1 then Stop
+            | switch_condition then BlackForward
+            | c2 then Left
+            | c3 then Right
+            | c4 then DriftRight
+            | c5 then DriftLeft
+            | true then Forward
+            
+
+        state DriftLeft
+        do
+            v_l = 0 ;   
+            v_r = wspeed + pid ;
+            dir = 3 ;
+            flag = false;
+        until c1 then Stop
+            | switch_condition then BlackForward
+            | c2 then Left
+            | c3 then Right
+            | c4 then DriftRight
+            | c5 then DriftLeft
+            | true then Forward
+            
+
+        state DriftRight
+        do
+            v_l = wspeed + pid ;
+            v_r = 0 ;
+            dir = 2 ;
+            flag = false;
+        until c1 then Stop
+            | switch_condition then BlackForward
+            | c2 then Left
+            | c3 then Right
+            | c4 then DriftRight
+            | c5 then DriftLeft
+            | true then Forward
+
+        
+        -- Black Line Following
+             
+        state BlackForward 
+        do
+            v_l = bspeed ;
+            v_r = bspeed ;
+            flag = true;
+            dir = 1 ; 
+        until (ir_d_front > (-1)) then ObstacleAvoidance  
+            | blacknodedetected and (count<=4) then BlackRight
+            | blacknodedetected and (count>4 and count <8 )then BlackLeft
+            | blacknodedetected and (count>=8) then ParkingDelay
+            | b5 then BlackDriftRight
+            | b4 then BlackDriftLeft
+            | true then BlackForward
+
+       
+        state BlackLeft
+        do
+            v_l = bspeed ;
+            v_r = bspeed ;
+            flag = true;
+            dir = 4 ;
+        until blacknodedetected then BlackLeft
+            | true then BlackForward
+            
+        state BlackRight
+        do
+            v_l = bspeed ;
+            v_r = bspeed ;
+            flag = true;
+            dir = 5 ; 
+        until blacknodedetected then BlackRight
+            | true then BlackForward
+            
+        state BlackDriftLeft
+        do
+            v_l = 0 ;
+            v_r = bspeed + pid ;
+            dir = 3 ;
+            flag = true; 
+        until blacknodedetected then BlackRight
+            | switch_condition then BlackForward 
+            | b4 then BlackDriftRight
+            | b5 then BlackDriftLeft
+            | true then BlackForward
+            
+        state BlackDriftRight
+        do
+            v_l = bspeed + pid ;
+            v_r = 0 ;
+            dir = 2 ;
+            flag = true;
+        until blacknodedetected then BlackRight
+            | switch_condition then BlackForward 
+            | b4 then BlackDriftRight
+            | b5 then BlackDriftLeft
+            | true then BlackForward
+
+
+        -- Obstacle Avoidance 
+        state ObstacleAvoidance do
+            dir = 0;
+            v_l = 0;
+            v_r = 0;
+            flag = true;
+            timer = 10 -> pre(timer) - 1;
+        until timer <= 0 then RightTurn1
+         
+        state RightTurn1 do
+            dir = 5;
+            v_l = oasspeed;
+            v_r = oasspeed;
+            flag = true;
+            timer = 132 -> pre(timer) - 1;
+        until timer <=0  then Move1
+
+        state Move1 do
+            dir = 1;
+            v_l = oasspeed;
+            v_r = oasspeed;
+            flag = true;
+        until (leftbackwardDetection = true) then Forward1
+
+        state Forward1 do
+            rightturn_count = 0 -> pre(rightturn_count) + 1; 
+            dir = 1;
+            v_l = oasspeed;
+            v_r = oasspeed;
+            flag = true;
+        until (leftbackwardDetection = true and leftforwardDetection = true) then LeftTurn1
+
+        state LeftTurn1 do
+            dir = 4;
+            v_l = oasspeed;
+            v_r = oasspeed;
+            flag = true;
+            timer = 33 -> pre(timer) - 1;
+        until timer <=0 then Move3
+
+
+        state Move3 do
+            dir = 1;
+            v_l = oasspeed;
+            v_r = oasspeed;
+            flag = true;
+        until (leftbackwardDetection = false) then Forward2
+
+        state Forward2 do 
+            dir = 1;
+            v_l = oasspeed;
+            v_r = oasspeed;
+            flag = true;
+        until (leftbackwardDetection = true) then LeftTurn2
+
+       
+        state LeftTurn2 do
+            dir = 4;
+            v_l = oasspeed;
+            v_r = oasspeed;
+            flag = true;
+            timer = 30 -> pre(timer) - 1;
+        until timer <=0 then Move5
+
+        state Move5 do
+            dir = 1;
+            v_l = oasspeed;
+            v_r = oasspeed;
+            flag = true;
+        until sen2<700 then RightTurn3
+
+        state RightTurn3 do
+            dir = 5;
+            v_l = oasspeed;
+            v_r = oasspeed;
+            flag = true;
+            timer = 80 -> pre(timer) - 1;
+        until timer <=0 then BlackRight
+
+
+        -- ParkingStart
+        
+
+        state ParkingDriftLeft
+        do
+            v_l = 0 ;
+            v_r = pspeed + pid ;
+            dir = 3 ;
+            flag = true; 
+        until b4 then ParkingDriftRight
+            | b5 then ParkingDriftLeft
+            | true continue ParkingStartFS
+            
+        state ParkingDriftRight
+        do
+            v_l = pspeed + pid ;
+            v_r = 0 ;
+            dir = 2 ;
+            flag = true;
+        until b4 then ParkingDriftRight
+            | b5 then ParkingDriftLeft
+            | true continue ParkingStartFS
+
+        state ParkingDriftLeftSS
+        do
+            v_l = 0 ;
+            v_r = pspeed + pid ;
+            dir = 3 ;
+            flag = true; 
+        until b4 then ParkingDriftRightSS
+            | b5 then ParkingDriftLeftSS
+            | true continue ParkingStartSS
+            
+        state ParkingDriftRightSS
+        do
+            v_l = pspeed + pid ;
+            v_r = 0 ;
+            dir = 2 ;
+            flag = true;
+        until  b4 then ParkingDriftRightSS
+            | b5 then ParkingDriftLeftSS
+            | true continue ParkingStartSS
+
+        state ParkingDriftLeftTS
+        do
+            v_l = 0 ;
+            v_r = pspeed + pid ;
+            dir = 3 ;
+            flag = true; 
+        until b4 then ParkingDriftRightTS
+            | b5 then ParkingDriftLeftTS
+            | true continue ParkingStartTS
+            
+        state ParkingDriftRightTS
+        do
+            v_l = pspeed + pid ;
+            v_r = 0 ;
+            dir = 2 ;
+            flag = true;
+        until  b4 then ParkingDriftRightTS
+            | b5 then ParkingDriftLeftTS
+            | true continue ParkingStartTS
+
+        state ParkingDelay
+        do 
+            dir = 0;
+            v_l= 0;
+            v_r = 0;
+            flag = true;
+            timer = 50 -> pre(timer) - 1;
+        until timer <=0 then Parking
+
+        state Parking
+        do
+            dir = 0;
+            v_l = 0;
+            v_r = 0;
+            flag = true;
+        until rightforwardDetection = false then ParkingStartFS
+            | true then FirstleftParking
+
+        state FirstleftParking
+        do
+            dir = 4;
+            v_l = pspeed + pid ;
+            v_r = 0;
+            flag = true;
+        until switch_condition then Forwardoneparking
+
+        state Forwardoneparking
+        do
+            dir = 1;
+            v_l = pspeed-10;
+            v_r = pspeed-10;
+            flag = true;
+        until b4 then PreParkingDriftRight
+            | b5 then PreParkingDriftLeft
+            | blacknodedetected then ParkingDelay
+       
+        
+        state PreParkingDriftLeft
+        do
+            v_l = 0 ;
+            v_r = pspeed + pid ;
+            dir = 3 ;
+            flag = true; 
+        until b4 then PreParkingDriftRight
+            | b5 then PreParkingDriftLeft
+            | true continue Forwardoneparking
+            
+        state PreParkingDriftRight
+        do
+            v_l = pspeed + pid ;
+            v_r = 0 ;
+            dir = 2 ;
+            flag = true;
+        until b4 then PreParkingDriftRight
+            | b5 then PreParkingDriftLeft
+            | true continue Forwardoneparking
+       
+
+        state ParkingStartFS
+        do
+            v_l = pspeed ;
+            v_r = pspeed ;
+            flag = true;
+            dir = 1 ; 
+            leftflag1 = if((leftbackwardDetection = false) or (leftforwardDetection = false))then last leftflag1+1 else last leftflag1;
+            rightflag1 = if((rightbackwardDetection = false) or (rightforwardDetection = false))then last rightflag1+1 else last rightflag1;
+            timer1 = 450 -> pre(timer1) - 1;
+
+        until timer1<=0 and leftflag1 = 0 then ParkleftBackward
+            | timer1<=0 and rightflag1 = 0 then ParkrightBackward
+            | timer1<=0 and leftflag1 > 0 and rightflag1>0 then DelayP1
+            | b4 then ParkingDriftRight
+            | b5 then ParkingDriftLeft
+        
+        state DelayP1 do
+            dir = 0;
+            v_l = 0;
+            v_r = 0;
+            flag = true;
+            timer1 = 5 -> pre(timer1) - 1;
+
+        until timer1<=0 then ParkingStartSS
+   
+        state ParkingStartSS
+        do
+            v_l = pspeed ;
+            v_r = pspeed ;
+            flag = true;
+            dir = 1 ; 
+            leftflag2 = if((leftbackwardDetection = false) or (leftforwardDetection = false))then last leftflag2+1 else last leftflag2;
+            rightflag2 = if((rightbackwardDetection = false) or (rightforwardDetection = false))then last rightflag2+1 else last rightflag2;
+            timer1 = 450 -> pre(timer1) - 1;
+
+        until timer1<=0 and leftflag2 = 0 then ParkleftBackward
+            | timer1<=0 and rightflag2 = 0 then ParkrightBackward
+            | timer1<=0 and leftflag2 > 0 and rightflag2>0 then DelayP2
+            | b4 then ParkingDriftRightSS
+            | b5 then ParkingDriftLeftSS
+
+        
+        state DelayP2 do
+            dir = 0;
+            v_l = 0;
+            v_r = 0;
+            flag = true;
+            timer1 = 5 -> pre(timer1) - 1;
+
+        until timer1<=0 then ParkingStartTS
+            
+        state ParkingStartTS
+        do
+            v_l = pspeed ;
+            v_r = pspeed ;
+            flag = true;
+            dir = 1 ; 
+            leftflag3 = if((leftbackwardDetection = false) or (leftforwardDetection = false))then last leftflag3+1 else last leftflag3;
+            rightflag3 = if((rightbackwardDetection = false) or (rightforwardDetection = false))then last rightflag3+1 else last rightflag3;
+            timer1 = 450 -> pre(timer1) - 1;
+
+        until timer1<=0 and leftflag3 = 0 then ParkleftBackward
+            | timer1<=0 and rightflag3 = 0 then ParkrightBackward
+            | timer1<=0 and leftflag3 > 0 and rightflag3>0 then ExitState
+            | b4 then ParkingDriftRightTS
+            | b5 then ParkingDriftLeftTS
+           
+
+        state ParkleftBackward
+        do
+            dir = 6;
+            v_l = pspeed-10;
+            v_r = pspeed-10;
+            flag = true;
+            timer1 = 220-> pre(timer1) - 1;
+        until timer1<=0 then LeftTurn_Park 
+            
+
+        state ParkrightBackward
+        do
+            dir = 6;
+            v_l = pspeed-10;
+            v_r = pspeed-10;
+            flag = true;
+            timer1 = 220 -> pre(timer1) - 1;
+        until timer1<=0 then RightTurn_Park
+           
+   
+        state RightTurn_Park 
+        do
+            dir = 5;
+            v_l = pspeed;
+            v_r = pspeed;
+            flag = true;
+            timer = 70 -> pre(timer) - 1;
+        until timer <=0 then Forward_1
+
+        state LeftTurn_Park 
+        do
+            dir = 4;
+            v_l = pspeed;
+            v_r = pspeed;
+            flag = true;
+            timer = 40 -> pre(timer) - 1;
+        until timer <=0 then Forward_1
+
+        state Forward_1
+        do 
+            dir = 1;
+            v_l = pspeed;
+            v_r = pspeed;
+            flag = true;
+            timer = 200 -> pre(timer) - 1;
+        until timer <= 0 then  ExitState
+
+        state ExitState
+        do
+            dir = 0;
+            flag = false;
+            v_l = 0;
+            v_r = 0;
+        until true then ExitState
+
+        -- end parking
+
+     end
+tel

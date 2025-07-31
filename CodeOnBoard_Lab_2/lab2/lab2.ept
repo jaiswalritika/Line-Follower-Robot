@@ -1,0 +1,146 @@
+(* Constants *)
+const line_sensor_threshold: int = 500
+const kp: int = 10
+const ki: int = 100
+const kd: int = 1000000
+
+(* node max(x,y: int) returns (ans: int)
+let
+    ans = if x > y then x else y;
+tel
+
+node min(x,y: int) returns (ans: int)
+let
+    ans = if x < y then x else y;
+tel
+
+node abs(x: int) returns (ans: int)
+let
+    ans = if x >=0 then x else x * -1;
+tel *)
+
+
+(* WHITE LINE FOLLOWING *)
+(* Node for calculating PID value *)
+node pid(sensors: int^5; tlm,tl,tc,tr,trm:bool) returns(pid_value:int)
+var last error:int;
+    last integral :int;
+    last derivative:int;
+    last temp:int;
+    
+let
+    error = (sensors[0]+sensors[1]) - (sensors[3]+sensors[4]);
+    integral = 0 -> (pre(integral) + error);
+    derivative = 0 -> (error - pre(error));
+    temp = error/kp + integral/ki + derivative/kd;
+    (* pid_value is in range [-100,100] *)
+    pid_value = if(temp < -100) then -100 else if(temp > 100) then 100 else temp;
+    (* pid_value = max(-100, min(100,temp)); -- testing *)
+tel
+
+(* Main Node *)
+node main(sen0, sen1, sen2, sen3, sen4: int) returns (v_l, v_r, dir: int)
+var 
+    tlm, tl, tc, tr, trm,c1,c2,c3,c4,c5,c6,c7: bool;
+    sensors: int^5;
+    left_rot_range, left_rot_hard_range, right_rot_range, right_rot_hard_range,pidValue: int;
+
+let
+    sensors = [sen0, sen1, sen2, sen3, sen4]; --Value of five sensors
+    
+    tlm = sen0 < line_sensor_threshold; --Leftmost sensor active
+    tl = sen1 < line_sensor_threshold; --Left sensor active
+    tc = sen2 < line_sensor_threshold; --Center sensor active
+    tr = sen3 < line_sensor_threshold; --Right sensor active
+    trm = sen4 < line_sensor_threshold; --Rightmost sensor active
+
+    pidValue = pid(sensors, tlm, tl,tc,tr,trm);
+
+    (* Range for Transitions *)
+    left_rot_hard_range = -60; 
+    left_rot_range = -30;
+    right_rot_range = 30;
+    right_rot_hard_range = 60;
+
+    (* If pidValue is between [-30 to 30] then it goes to Moveforward
+       If pidValue is between [30 to 60] then it goes to DriftLeft
+       If pidValue is between [-60 to -30] then it goes to DriftRight
+       If pidValue is greater than 60 then it goes to Left
+       If pidValue is lesser than -60 then it goes to Right
+       If all sensors active then it goes to Stop
+       If all sensors are inactive then it goes to Backward *)
+    c1 = pidValue < right_rot_range and pidValue > left_rot_range;  --moveforward
+    c3 = pidValue < right_rot_hard_range and pidValue > right_rot_range; -- driftleft
+    c2 = pidValue < left_rot_range and pidValue > left_rot_hard_range; -- driftright
+    c5 = right_rot_hard_range < pidValue; --left
+    c4 = left_rot_hard_range > pidValue; --right
+    c6 = tlm and tl and tc and tr and trm; -- stopstate
+    c7 = not tlm and not tl and not tc and not tr and not trm; -- Backward
+
+    automaton
+        state Start 
+        do 
+            dir = 1; 
+            v_l = 100;
+            v_r = 100;
+        until (tlm or tl or tc or tr or trm) then Forward
+
+    
+        state Forward 
+        do 
+            v_l=70; --Velocity of left motor
+            v_r=70; --Velocity of right motor
+            dir=1;
+        unless (c7) then Backward | (c6) then StopState | (c2) then DriftLeft | (c3) then DriftRight | (c4) then Left | (c5) then Right  
+
+        (* If all sensors active then it Stops *)
+        state StopState
+        do 
+            dir = 0;
+            v_l = 0; --Velocity of left motor
+            v_r = 0; --Velocity of right motor
+        until  true then StopState
+
+
+        state DriftLeft
+        do 
+            v_l=20; --Velocity of left motor
+            v_r=30; --Velocity of right motor
+            dir=1;
+        unless (c7) then Backward | (c6) then StopState | (c1) then Forward | (c3) then DriftRight | c4 then Left | (c5) then Right 
+
+
+        state DriftRight
+        do 
+            v_l=30; --Velocity of left motor
+            v_r=20; --Velocity of right motor
+            dir=1;
+        unless (c7) then Backward | (c6) then StopState  | (c1) then Forward | (c2) then DriftLeft | c4 then Left | (c5) then Right 
+
+                
+        state Left
+        do 
+            v_l=50; --Velocity of left motor
+            v_r=70; --Velocity of right motor
+            dir=2;
+        unless (c7) then Backward | (c6) then StopState  | (c1) then Forward | (c2) then DriftLeft | (c3) then DriftRight | (c5) then Right 
+
+
+        state Right
+        do 
+            v_l=70; --Velocity of left motor
+            v_r=50; --Velocity of right motor
+            dir=3;
+        unless (c7) then Backward | (c6) then StopState | (c1) then Forward | (c2) then DriftLeft | (c3) then DriftRight | (c4) then Left 
+ 
+        (* --Robot rotates 180 degrees and then transitions only to the Forward state *)
+        state Backward 
+        do  
+            dir = 4;
+            v_l = 50; --Velocity of left motor
+            v_r = 50; --Velocity of right motor
+        unless  not (tlm and tl and tc and tr and trm) then Forward 
+
+    end 
+tel
+

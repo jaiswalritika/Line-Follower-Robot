@@ -1,0 +1,3 @@
+ Every team member contributed equally while building the line-following robot. We regularly held meetings to plan and refine the calculation of switchcondition, OAS logic and Parking logic, adjust motor velocities in different states, and ultimately finalize the implementation. We encountered issues such as incorrect robot movement, obstacle collision, incorrect parking and unexpected stops while following the line. 
+However, through consistent testing and discussions in our meetings, we successfully resolved these challenges.
+Jayesh and Atul created and recorded the simulation and code explanation videos. Ritika and Utkarsh created the presentation and edited the video.

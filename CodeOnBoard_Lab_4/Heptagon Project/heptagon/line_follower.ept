@@ -1,0 +1,319 @@
+const kp : int = 3
+const kd : int = 1
+
+node findpid(sen3, sen1:int ) returns(pid:int)
+var z: int;
+    p,d: int;
+     last error : int;
+let
+    error = sen3 - sen1;
+     p = error;
+     d = error - (0->last error);
+     z = ((kp*p) + (kd*d));
+     pid = if( z>0 ) then 15 else -15;
+tel
+
+
+
+node counter(sen0, sen1, sen2, sen3, sen4: int; beacon: int; flag: bool) returns (finalcount: int )
+var 
+	last c: int = 0; 
+	last bcount: int = 0;
+	last flg: bool = false; 
+let
+	finalcount = c;
+	flg = flag;
+	automaton
+		state Initial
+			do c = last c;
+			   bcount = 0;
+		unless(flag and (sen1 + sen2 + sen3 < 2250)) continue CountIncrement
+		
+		state CountIncrement
+			do 
+			   c = last c + 1;
+			   bcount = 0;
+		until true then WaitForNextIncrement
+		
+		state WaitForNextIncrement
+			do 	
+			   bcount = last bcount + beacon;
+			   c = last c;
+			  
+		unless (flag and last bcount > 1) continue Initial
+	end
+tel
+
+
+
+node main(sen0, sen1, sen2, sen3, sen4, ir_d_front, ir_d_left, beacon, second: int) returns (v_l, v_r, dir : int ; last cnt : int)
+var pid, wspeed, bspeed, oasspeed, count:int; 
+    flag: bool;
+    c1, c2, c3, c4, c5, blacknodedetected, b3, b4, b5, switch_condition:bool;
+    last timer: int;
+    last rightturn_count:int;
+
+let
+    (* Following is the initialization of different conditions and variables used in the code  *)
+    pid = findpid(sen3,sen1);
+    c1 = (sen0 + sen1 + sen2 + sen3 + sen4) > 4500;
+    c2 = ((sen0*18)/10) > 900;
+    c3 = sen4>900;
+    c4 = sen1>900 and sen2 < 800;
+    c5 = sen3>900 and sen2 < 800; 
+    switch_condition = (sen2 < 700) and (sen4 > 800) and (sen0 + sen1 > 1400); 
+    wspeed = 40 ;
+    bspeed = 40 ;
+    oasspeed = 40;
+    blacknodedetected = (sen0 + sen1 + sen2 + sen3 + sen4) < 3000;
+    b3 = sen4<700;
+    b4 = sen1<700 and sen2 > 700 ;
+    b5 = sen3<700 and sen2 > 700 ;
+    count = counter(sen0, sen1, sen2, sen3, sen4, beacon, flag);
+    cnt = count;
+
+    automaton
+        state Forward
+        do  
+            v_l = wspeed ;
+            v_r = wspeed ;
+            flag = false;
+            dir = 1 ;
+        until switch_condition then BlackForward 
+            | c2 then Left
+            | c3 then Right
+            | c4 then DriftRight
+            | c5 then DriftLeft
+
+        state Stop
+        do
+            v_l = 0 ;
+            v_r = 0 ;
+            flag = false;
+            dir = 0 ;
+        until
+            | switch_condition then BlackForward
+            | not c1 and c2 then Left
+            | c3 then Right
+            | c4 then DriftRight
+            | c5 then DriftLeft
+            | true then Forward
+
+        state Left
+        do
+            v_l = wspeed ;
+            v_r = wspeed ;
+            flag = false;
+            dir = 4 ;
+        until c1 then Stop
+            | switch_condition then BlackForward
+            | c3 then Right
+            | c4 then DriftRight
+            | c5 then DriftLeft
+            | true then Forward
+
+        state Right
+        do
+            v_l = wspeed ;
+            v_r = wspeed ;
+            flag = false;
+            dir = 5 ;
+        until c1 then Stop
+            | switch_condition then BlackForward
+            | c2 then Left
+            | c3 then Right
+            | c4 then DriftRight
+            | c5 then DriftLeft
+            | true then Forward
+            
+
+        state DriftLeft
+        do
+            v_l = 0 ;
+            v_r = wspeed + pid ;
+            dir = 3 ;
+            flag = false;
+        until c1 then Stop
+            | switch_condition then BlackForward
+            | c2 then Left
+            | c3 then Right
+            | c4 then DriftRight
+            | c5 then DriftLeft
+            | true then Forward
+            
+
+        state DriftRight
+        do
+            v_l = wspeed + pid ;
+            v_r = 0 ;
+            dir = 2 ;
+            flag = false;
+        until c1 then Stop
+            | switch_condition then BlackForward
+            | c2 then Left
+            | c3 then Right
+            | c4 then DriftRight
+            | c5 then DriftLeft
+            | true then Forward
+            
+
+        state BlackForward 
+        do
+            v_l = bspeed ;
+            v_r = bspeed ;
+            flag = true;
+            dir = 1 ; 
+        until (ir_d_front > (-1)) then ObstacleAvoidance  
+            | blacknodedetected and (count<=3) then BlackRight
+            | blacknodedetected and (count>3 and count <=6)then BlackLeft
+            | blacknodedetected and (count>6) then BlackStop
+            | b4 then BlackDriftRight
+            | b5 then BlackDriftLeft
+            | true then BlackForward
+
+        state BlackStop
+        do
+            v_l = 0;
+            v_r = 0;
+            dir = 0;
+            flag = true;
+        until true then BlackStop
+
+        state BlackLeft
+        do
+            v_l = bspeed ;
+            v_r = bspeed ;
+            flag = true;
+            dir = 4 ;
+        until blacknodedetected then BlackLeft
+            | true then BlackForward
+            
+        state BlackRight
+        do
+            v_l = bspeed ;
+            v_r = bspeed ;
+            flag = true;
+            dir = 5 ; 
+        until blacknodedetected then BlackRight
+            | true then BlackForward
+            
+        state BlackDriftLeft
+        do
+            v_l = 0 ;
+            v_r = bspeed + pid ;
+            dir = 3 ;
+            flag = true; 
+        until blacknodedetected then BlackRight
+            | switch_condition then BlackForward 
+            | b4 then BlackDriftRight
+            | b5 then BlackDriftLeft
+            | true then BlackForward
+            
+        state BlackDriftRight
+        do
+            v_l = bspeed + pid ;
+            v_r = 0 ;
+            dir = 2 ;
+            flag = true;
+        until blacknodedetected then BlackRight
+            | switch_condition then BlackForward 
+            | b4 then BlackDriftRight
+            | b5 then BlackDriftLeft
+            | true then BlackForward
+
+        state ObstacleAvoidance do
+            dir = 0;
+            v_l = 0;
+            v_r = 0;
+            flag = true;
+            timer = 100 -> pre(timer) - 1;
+        until timer <= 0 then RightTurn1
+         
+        state RightTurn1 do
+            dir = 5;
+            v_l = oasspeed;
+            v_r = oasspeed;
+            flag = true;
+            timer = 90 -> pre(timer) - 1;
+        until timer <=0 then Move1
+
+        state Move1 do
+            dir = 1;
+            v_l = oasspeed;
+            v_r = oasspeed;
+            flag = true;
+            timer = 100 -> pre(timer) - 1;
+        until timer <= 0 then Forward1
+
+        state Forward1 do
+            rightturn_count = 0 -> pre(rightturn_count) + 1; 
+            dir = 1;
+            v_l = oasspeed;
+            v_r = oasspeed;
+            flag = true;
+        until (ir_d_left = 1) then Move2
+
+        state Move2 do
+            dir = 1;
+            v_l = oasspeed;
+            v_r = oasspeed;
+            flag = true;
+            timer = 75 -> pre(timer) - 1;
+        until timer <= 0 then LeftTurn1
+
+        state LeftTurn1 do
+            dir = 4;
+            v_l = oasspeed;
+            v_r = oasspeed;
+            flag = true;
+            timer = 37 -> pre(timer) - 1;
+        until timer <=0 then Move3
+
+        state Move3 do
+            dir = 1;
+            v_l = oasspeed;
+            v_r = oasspeed;
+            flag = true;
+            timer = 200 -> pre(timer) - 1;
+        until timer <= 0 then Forward2
+
+        state Forward2 do 
+            dir = 1;
+            v_l = oasspeed;
+            v_r = oasspeed;
+            flag = true;
+        until (ir_d_left = 1) then Move4
+
+        state Move4 do
+          dir = 1;
+          v_l = oasspeed;
+          v_r = oasspeed;
+          flag = true;
+          timer = 75 -> pre(timer) - 1;
+        until timer <= 0 then LeftTurn2
+
+        state LeftTurn2 do
+            dir = 4;
+            v_l = oasspeed;
+            v_r = oasspeed;
+            flag = true;
+            timer = 35 -> pre(timer) - 1;
+        until timer <=0 then Move5
+
+        state Move5 do
+            dir = 1;
+            v_l = oasspeed;
+            v_r = oasspeed;
+            flag = true;
+        until blacknodedetected then RightTurn3
+
+        state RightTurn3 do
+            dir = 5;
+            v_l = oasspeed;
+            v_r = oasspeed;
+            flag = true;
+            timer = 80 -> pre(timer) - 1;
+        until timer <=0 then BlackRight
+
+     end
+tel

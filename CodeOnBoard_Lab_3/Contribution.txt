@@ -1,0 +1,3 @@
+Every team member contributed equally while building the line-following robot. We regularly held meetings to plan and refine the calculation of PID values,
+adjust motor velocities in different states, and ultimately finalize the implementation. We encountered issues such as incorrect robot movement and unexpected 
+stops while following the line. However, through consistent testing and discussions in our meetings, we successfully resolved these challenges.

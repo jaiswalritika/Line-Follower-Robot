@@ -1,0 +1,102 @@
+const kp : int = 3
+const ki : int = 0
+const kd : int = 1
+
+node findpid(sen3, sen1:int ) returns(pid:int)
+var z: int;
+    p,d,i: int;
+    last error : int;
+let
+    error = sen3 - sen1;
+     p = error;
+     i = 0-> pre(i)+error;
+     d = error - (0->last error);
+     z = ((kp*p) + (ki*i) + (kd*d));
+     pid = if( z>0 ) then 15 else -15;
+tel
+
+node main(sen0, sen1, sen2, sen3, sen4: int) returns (v_l, v_r, dir: int)
+var pid:int;
+    c1, c2, c3, c4, c5:bool;
+let       
+   
+     pid = findpid(sen3,sen1);
+     c1 = (sen0 + sen1 + sen2 + sen3 + sen4) > 4500;
+     c2 = ((sen0*18)/10) > 900;
+     c3 = sen4>900;
+     c4 = sen1>900;
+     c5 = sen3>900;
+
+     automaton
+        state Forward
+        do  
+            v_l = 50 ;
+            v_r = 50 ;
+            dir = 1 ;
+        until c1 then Stop
+            | c2 then Left
+            | c3 then Right
+            | c4 then DriftRight
+            | c5 then DriftLeft
+
+        state Stop
+        do
+            v_l = 0 ;
+            v_r = 0 ;
+            dir = 0 ;
+        until
+            | not c1 and c2 then Left
+            | c3 then Right
+            | c4 then DriftRight
+            | c5 then DriftLeft
+            | true then Forward
+
+        state Left
+        do
+            v_l = 50 ;
+            v_r = 50 ;
+            dir = 4 ;
+        until c1 then Stop
+            | c3 then Right
+            | c4 then DriftRight
+            | c5 then DriftLeft
+            | true then Forward
+
+        state Right
+        do
+            v_l = 50 ;
+            v_r = 50 ;
+            dir = 5 ;
+        until c1 then Stop
+            | c2 then Left
+            | c3 then Right
+            | c4 then DriftRight
+            | c5 then DriftLeft
+            | true then Forward
+
+        state DriftLeft
+        do
+            v_l = 0 ;
+            v_r = 40 + pid ;
+            dir = 3 ;
+        until c1 then Stop
+            | c2 then Left
+            | c3 then Right
+            | c4 then DriftRight
+            | c5 then DriftLeft
+            | true then Forward
+
+        state DriftRight
+        do
+            v_l = 40 + pid ;
+            v_r = 0 ;
+            dir = 2 ;
+        until c1 then Stop
+            | c2 then Left
+            | c3 then Right
+            | c4 then DriftRight
+            | c5 then DriftLeft
+            | true then Forward
+
+     end
+tel

@@ -1,0 +1,868 @@
+type st_1 = St_1_Stop|St_1_RightTurn3|St_1_RightTurn1|St_1_Right|
+  St_1_ObstacleAvoidance|St_1_Move5|St_1_Move4|St_1_Move3|St_1_Move2|
+  St_1_Move1|St_1_LeftTurn2|St_1_LeftTurn1|St_1_Left|St_1_Forward2|
+  St_1_Forward1|St_1_Forward|St_1_DriftRight|St_1_DriftLeft|St_1_BlackStop|
+  St_1_BlackRight|St_1_BlackLeft|St_1_BlackForward|St_1_BlackDriftRight|
+  St_1_BlackDriftLeft
+type st = St_Wait|St_Ready|St_Increment
+const kp = 3
+const kd = 1
+node findpid(sen3 : int; sen1 : int) returns (pid : int)
+var error : int; d : int; p : int; z : int; error_1 : int; v : bool;
+    v_1 : int; v_2 : int; v_3 : int; v_4 : bool;
+let
+  error_1 = pre error;
+  pid = if v_4 then 15 else ~-(15);
+  v_4 = (z > 0);
+  z = (v_2 + v_3);
+  v_3 = (kd * d);
+  v_2 = (kp * p);
+  d = (error - v_1);
+  v_1 = if v then 0 else error_1;
+  v = true fby false;
+  p = error;
+  error = (sen3 - sen1)
+tel
+
+node counter(sen0 : int; sen1 : int; sen2 : int; sen3 : int; sen4 : int;
+              beacon : int; flag : bool)
+returns (count : int)
+var beaconcount : int; flg : bool; cnt : int; cnt_2 : int; flg_1 : bool;
+    beaconcount_1 : int; pnr : bool; nr : bool; r : bool; ns : st; s : st;
+    ck_1 : st; cnt_St_Ready : int; beaconcount_St_Ready : int;
+    ns_St_Ready : st; nr_St_Ready : bool; cnt_St_Increment : int;
+    beaconcount_St_Increment : int; ns_St_Increment : st;
+    nr_St_Increment : bool; cnt_St_Wait : int; beaconcount_St_Wait : int;
+    ns_St_Wait : st; nr_St_Wait : bool; ck : st; s_St_Ready : st;
+    r_St_Ready : bool; s_St_Increment : st; r_St_Increment : bool;
+    s_St_Wait : st; r_St_Wait : bool; v_6 : int; v_7 : int; v_8 : bool;
+    v_9 : bool; v : bool; v_5 : bool;
+let
+  beaconcount_1 = 0 fby beaconcount;
+  flg_1 = false fby flg;
+  cnt_2 = 0 fby cnt;
+  pnr = false fby nr;
+  ck_1 = s;
+  beaconcount_St_Ready = 0;
+  cnt_St_Ready = (cnt_2 when St_Ready(ck_1));
+  nr_St_Ready = false;
+  ns_St_Ready = St_Ready;
+  beaconcount_St_Increment = 0;
+  cnt_St_Increment = ((cnt_2 when St_Increment(ck_1)) + 1);
+  nr_St_Increment = if true then true else false;
+  ns_St_Increment = if true then St_Wait else St_Increment;
+  cnt_St_Wait = (cnt_2 when St_Wait(ck_1));
+  beaconcount_St_Wait =
+    ((beaconcount_1 when St_Wait(ck_1)) + (beacon when St_Wait(ck_1)));
+  nr_St_Wait = false;
+  ns_St_Wait = St_Wait;
+  cnt =
+    merge ck_1
+      (St_Wait -> cnt_St_Wait)(St_Increment -> cnt_St_Increment)
+      (St_Ready -> cnt_St_Ready);
+  beaconcount =
+    merge ck_1
+      (St_Wait -> beaconcount_St_Wait)
+      (St_Increment -> beaconcount_St_Increment)
+      (St_Ready -> beaconcount_St_Ready);
+  ns =
+    merge ck_1
+      (St_Wait -> ns_St_Wait)(St_Increment -> ns_St_Increment)
+      (St_Ready -> ns_St_Ready);
+  nr =
+    merge ck_1
+      (St_Wait -> nr_St_Wait)(St_Increment -> nr_St_Increment)
+      (St_Ready -> nr_St_Ready);
+  ck = St_Ready fby ns;
+  r_St_Ready = if v_9 then false else (pnr when St_Ready(ck));
+  s_St_Ready = if v_9 then St_Increment else St_Ready;
+  v_9 = ((flag when St_Ready(ck)) & v_8);
+  v_8 = (v_7 < 2250);
+  v_7 = (v_6 + (sen3 when St_Ready(ck)));
+  v_6 = ((sen1 when St_Ready(ck)) + (sen2 when St_Ready(ck)));
+  r_St_Increment = (pnr when St_Increment(ck));
+  s_St_Increment = St_Increment;
+  r_St_Wait = if v_5 then false else (pnr when St_Wait(ck));
+  s_St_Wait = if v_5 then St_Ready else St_Wait;
+  v_5 = ((flag when St_Wait(ck)) & v);
+  v = ((beaconcount_1 when St_Wait(ck)) > 1);
+  s =
+    merge ck
+      (St_Wait -> s_St_Wait)(St_Increment -> s_St_Increment)
+      (St_Ready -> s_St_Ready);
+  r =
+    merge ck
+      (St_Wait -> r_St_Wait)(St_Increment -> r_St_Increment)
+      (St_Ready -> r_St_Ready);
+  flg = flag;
+  count = cnt
+tel
+
+node main(sen0 : int; sen1 : int; sen2 : int; sen3 : int; sen4 : int;
+           ir_d_front : int; ir_d_left : int; beacon : int; second : int)
+returns (v_l : int; v_r : int; dir : int; cnt : int)
+var rightturn_count : int; timer : int; switch_condition : bool; b5 : bool;
+    b4 : bool; b3 : bool; blacknodedetected : bool; c5 : bool; c4 : bool;
+    c3 : bool; c2 : bool; c1 : bool; flag : bool; count : int;
+    oasspeed : int; bspeed : int; wspeed : int; pid : int; cnt_3 : int;
+    timer_1 : int; rightturn_count_1 : int; pnr : bool; nr : bool; r : bool;
+    ns : st_1; v : int; v_10 : int; v_11 : int; v_12 : int; v_13 : int;
+    v_14 : int; v_15 : bool; v_16 : bool; v_17 : bool; v_18 : bool;
+    v_19 : bool; v_20 : bool; v_21 : bool; v_22 : int; v_23 : bool;
+    v_24 : int; v_25 : int; v_26 : int; v_27 : int; v_28 : bool; v_29 : bool;
+    v_30 : bool; v_31 : bool; ck : st_1; v_l_St_1_Forward : int;
+    v_r_St_1_Forward : int; dir_St_1_Forward : int; flag_St_1_Forward : bool;
+    timer_St_1_Forward : int; rightturn_count_St_1_Forward : int;
+    ns_St_1_Forward : st_1; nr_St_1_Forward : bool; v_l_St_1_Stop : int;
+    v_r_St_1_Stop : int; dir_St_1_Stop : int; flag_St_1_Stop : bool;
+    timer_St_1_Stop : int; rightturn_count_St_1_Stop : int;
+    ns_St_1_Stop : st_1; nr_St_1_Stop : bool; v_l_St_1_Left : int;
+    v_r_St_1_Left : int; dir_St_1_Left : int; flag_St_1_Left : bool;
+    timer_St_1_Left : int; rightturn_count_St_1_Left : int;
+    ns_St_1_Left : st_1; nr_St_1_Left : bool; v_l_St_1_Right : int;
+    v_r_St_1_Right : int; dir_St_1_Right : int; flag_St_1_Right : bool;
+    timer_St_1_Right : int; rightturn_count_St_1_Right : int;
+    ns_St_1_Right : st_1; nr_St_1_Right : bool; v_l_St_1_DriftLeft : int;
+    v_r_St_1_DriftLeft : int; dir_St_1_DriftLeft : int;
+    flag_St_1_DriftLeft : bool; timer_St_1_DriftLeft : int;
+    rightturn_count_St_1_DriftLeft : int; ns_St_1_DriftLeft : st_1;
+    nr_St_1_DriftLeft : bool; v_l_St_1_DriftRight : int;
+    v_r_St_1_DriftRight : int; dir_St_1_DriftRight : int;
+    flag_St_1_DriftRight : bool; timer_St_1_DriftRight : int;
+    rightturn_count_St_1_DriftRight : int; ns_St_1_DriftRight : st_1;
+    nr_St_1_DriftRight : bool; v_l_St_1_BlackForward : int;
+    v_r_St_1_BlackForward : int; dir_St_1_BlackForward : int;
+    flag_St_1_BlackForward : bool; timer_St_1_BlackForward : int;
+    rightturn_count_St_1_BlackForward : int; ns_St_1_BlackForward : st_1;
+    nr_St_1_BlackForward : bool; v_l_St_1_BlackStop : int;
+    v_r_St_1_BlackStop : int; dir_St_1_BlackStop : int;
+    flag_St_1_BlackStop : bool; timer_St_1_BlackStop : int;
+    rightturn_count_St_1_BlackStop : int; ns_St_1_BlackStop : st_1;
+    nr_St_1_BlackStop : bool; v_l_St_1_BlackLeft : int;
+    v_r_St_1_BlackLeft : int; dir_St_1_BlackLeft : int;
+    flag_St_1_BlackLeft : bool; timer_St_1_BlackLeft : int;
+    rightturn_count_St_1_BlackLeft : int; ns_St_1_BlackLeft : st_1;
+    nr_St_1_BlackLeft : bool; v_l_St_1_BlackRight : int;
+    v_r_St_1_BlackRight : int; dir_St_1_BlackRight : int;
+    flag_St_1_BlackRight : bool; timer_St_1_BlackRight : int;
+    rightturn_count_St_1_BlackRight : int; ns_St_1_BlackRight : st_1;
+    nr_St_1_BlackRight : bool; v_l_St_1_BlackDriftLeft : int;
+    v_r_St_1_BlackDriftLeft : int; dir_St_1_BlackDriftLeft : int;
+    flag_St_1_BlackDriftLeft : bool; timer_St_1_BlackDriftLeft : int;
+    rightturn_count_St_1_BlackDriftLeft : int; ns_St_1_BlackDriftLeft : st_1;
+    nr_St_1_BlackDriftLeft : bool; v_l_St_1_BlackDriftRight : int;
+    v_r_St_1_BlackDriftRight : int; dir_St_1_BlackDriftRight : int;
+    flag_St_1_BlackDriftRight : bool; timer_St_1_BlackDriftRight : int;
+    rightturn_count_St_1_BlackDriftRight : int;
+    ns_St_1_BlackDriftRight : st_1; nr_St_1_BlackDriftRight : bool;
+    v_l_St_1_ObstacleAvoidance : int; v_r_St_1_ObstacleAvoidance : int;
+    dir_St_1_ObstacleAvoidance : int; flag_St_1_ObstacleAvoidance : bool;
+    timer_St_1_ObstacleAvoidance : int;
+    rightturn_count_St_1_ObstacleAvoidance : int;
+    ns_St_1_ObstacleAvoidance : st_1; nr_St_1_ObstacleAvoidance : bool;
+    v_l_St_1_RightTurn1 : int; v_r_St_1_RightTurn1 : int;
+    dir_St_1_RightTurn1 : int; flag_St_1_RightTurn1 : bool;
+    timer_St_1_RightTurn1 : int; rightturn_count_St_1_RightTurn1 : int;
+    ns_St_1_RightTurn1 : st_1; nr_St_1_RightTurn1 : bool;
+    v_l_St_1_Move1 : int; v_r_St_1_Move1 : int; dir_St_1_Move1 : int;
+    flag_St_1_Move1 : bool; timer_St_1_Move1 : int;
+    rightturn_count_St_1_Move1 : int; ns_St_1_Move1 : st_1;
+    nr_St_1_Move1 : bool; v_l_St_1_Forward1 : int; v_r_St_1_Forward1 : int;
+    dir_St_1_Forward1 : int; flag_St_1_Forward1 : bool;
+    timer_St_1_Forward1 : int; rightturn_count_St_1_Forward1 : int;
+    ns_St_1_Forward1 : st_1; nr_St_1_Forward1 : bool; v_l_St_1_Move2 : int;
+    v_r_St_1_Move2 : int; dir_St_1_Move2 : int; flag_St_1_Move2 : bool;
+    timer_St_1_Move2 : int; rightturn_count_St_1_Move2 : int;
+    ns_St_1_Move2 : st_1; nr_St_1_Move2 : bool; v_l_St_1_LeftTurn1 : int;
+    v_r_St_1_LeftTurn1 : int; dir_St_1_LeftTurn1 : int;
+    flag_St_1_LeftTurn1 : bool; timer_St_1_LeftTurn1 : int;
+    rightturn_count_St_1_LeftTurn1 : int; ns_St_1_LeftTurn1 : st_1;
+    nr_St_1_LeftTurn1 : bool; v_l_St_1_Move3 : int; v_r_St_1_Move3 : int;
+    dir_St_1_Move3 : int; flag_St_1_Move3 : bool; timer_St_1_Move3 : int;
+    rightturn_count_St_1_Move3 : int; ns_St_1_Move3 : st_1;
+    nr_St_1_Move3 : bool; v_l_St_1_Forward2 : int; v_r_St_1_Forward2 : int;
+    dir_St_1_Forward2 : int; flag_St_1_Forward2 : bool;
+    timer_St_1_Forward2 : int; rightturn_count_St_1_Forward2 : int;
+    ns_St_1_Forward2 : st_1; nr_St_1_Forward2 : bool; v_l_St_1_Move4 : int;
+    v_r_St_1_Move4 : int; dir_St_1_Move4 : int; flag_St_1_Move4 : bool;
+    timer_St_1_Move4 : int; rightturn_count_St_1_Move4 : int;
+    ns_St_1_Move4 : st_1; nr_St_1_Move4 : bool; v_l_St_1_LeftTurn2 : int;
+    v_r_St_1_LeftTurn2 : int; dir_St_1_LeftTurn2 : int;
+    flag_St_1_LeftTurn2 : bool; timer_St_1_LeftTurn2 : int;
+    rightturn_count_St_1_LeftTurn2 : int; ns_St_1_LeftTurn2 : st_1;
+    nr_St_1_LeftTurn2 : bool; v_l_St_1_Move5 : int; v_r_St_1_Move5 : int;
+    dir_St_1_Move5 : int; flag_St_1_Move5 : bool; timer_St_1_Move5 : int;
+    rightturn_count_St_1_Move5 : int; ns_St_1_Move5 : st_1;
+    nr_St_1_Move5 : bool; v_l_St_1_RightTurn3 : int;
+    v_r_St_1_RightTurn3 : int; dir_St_1_RightTurn3 : int;
+    flag_St_1_RightTurn3 : bool; timer_St_1_RightTurn3 : int;
+    rightturn_count_St_1_RightTurn3 : int; ns_St_1_RightTurn3 : st_1;
+    nr_St_1_RightTurn3 : bool; v_182 : st_1; v_183 : bool; v_184 : st_1;
+    v_185 : bool; v_186 : st_1; v_187 : bool; v_188 : st_1; v_189 : bool;
+    v_170 : bool; v_171 : bool; v_172 : st_1; v_173 : bool; v_174 : st_1;
+    v_175 : bool; v_176 : st_1; v_177 : bool; v_178 : st_1; v_179 : bool;
+    v_180 : st_1; v_181 : bool; v_160 : st_1; v_161 : bool; v_162 : st_1;
+    v_163 : bool; v_164 : st_1; v_165 : bool; v_166 : st_1; v_167 : bool;
+    v_168 : st_1; v_169 : bool; v_148 : st_1; v_149 : bool; v_150 : st_1;
+    v_151 : bool; v_152 : st_1; v_153 : bool; v_154 : st_1; v_155 : bool;
+    v_156 : st_1; v_157 : bool; v_158 : st_1; v_159 : bool; v_136 : st_1;
+    v_137 : bool; v_138 : st_1; v_139 : bool; v_140 : st_1; v_141 : bool;
+    v_142 : st_1; v_143 : bool; v_144 : st_1; v_145 : bool; v_146 : st_1;
+    v_147 : bool; v_124 : st_1; v_125 : bool; v_126 : st_1; v_127 : bool;
+    v_128 : st_1; v_129 : bool; v_130 : st_1; v_131 : bool; v_132 : st_1;
+    v_133 : bool; v_134 : st_1; v_135 : bool; v_103 : bool; v_104 : bool;
+    v_105 : bool; v_106 : bool; v_107 : bool; v_108 : bool; v_109 : bool;
+    v_110 : bool; v_111 : bool; v_112 : st_1; v_113 : bool; v_114 : st_1;
+    v_115 : bool; v_116 : st_1; v_117 : bool; v_118 : st_1; v_119 : bool;
+    v_120 : st_1; v_121 : bool; v_122 : st_1; v_123 : bool; v_101 : st_1;
+    v_102 : bool; v_99 : st_1; v_100 : bool; v_91 : st_1; v_92 : bool;
+    v_93 : st_1; v_94 : bool; v_95 : st_1; v_96 : bool; v_97 : st_1;
+    v_98 : bool; v_83 : st_1; v_84 : bool; v_85 : st_1; v_86 : bool;
+    v_87 : st_1; v_88 : bool; v_89 : st_1; v_90 : bool; v_78 : bool;
+    v_79 : bool; v_80 : bool; v_81 : int; v_82 : int; v_73 : bool;
+    v_74 : bool; v_75 : bool; v_76 : int; v_77 : int; v_68 : bool;
+    v_69 : bool; v_70 : bool; v_71 : int; v_72 : int; v_63 : bool;
+    v_64 : bool; v_65 : bool; v_66 : int; v_67 : int; v_58 : bool;
+    v_59 : bool; v_60 : bool; v_61 : int; v_62 : int; v_53 : bool;
+    v_54 : bool; v_55 : bool; v_56 : int; v_57 : int; v_48 : bool;
+    v_49 : bool; v_50 : bool; v_51 : int; v_52 : int; v_47 : bool;
+    v_42 : bool; v_43 : bool; v_44 : bool; v_45 : int; v_46 : int;
+    v_37 : bool; v_38 : bool; v_39 : bool; v_40 : int; v_41 : int;
+    v_32 : bool; v_33 : bool; v_34 : bool; v_35 : int; v_36 : int;
+let
+  rightturn_count_1 = pre rightturn_count;
+  timer_1 = pre timer;
+  cnt_3 = pre cnt;
+  r = pnr;
+  pnr = false fby nr;
+  ck = St_1_Forward fby ns;
+  rightturn_count_St_1_Forward = (rightturn_count_1 when St_1_Forward(ck));
+  timer_St_1_Forward = (timer_1 when St_1_Forward(ck));
+  dir_St_1_Forward = 1;
+  flag_St_1_Forward = false;
+  v_r_St_1_Forward = (wspeed when St_1_Forward(ck));
+  v_l_St_1_Forward = (wspeed when St_1_Forward(ck));
+  nr_St_1_Forward =
+    if (switch_condition when St_1_Forward(ck)) then true else v_189;
+  ns_St_1_Forward =
+    if (switch_condition when St_1_Forward(ck))
+    then St_1_BlackForward
+    else v_188;
+  v_189 = if (c2 when St_1_Forward(ck)) then true else v_187;
+  v_188 = if (c2 when St_1_Forward(ck)) then St_1_Left else v_186;
+  v_187 = if (c3 when St_1_Forward(ck)) then true else v_185;
+  v_186 = if (c3 when St_1_Forward(ck)) then St_1_Right else v_184;
+  v_185 = if (c4 when St_1_Forward(ck)) then true else v_183;
+  v_184 = if (c4 when St_1_Forward(ck)) then St_1_DriftRight else v_182;
+  v_183 = if (c5 when St_1_Forward(ck)) then true else false;
+  v_182 = if (c5 when St_1_Forward(ck)) then St_1_DriftLeft else St_1_Forward;
+  rightturn_count_St_1_Stop = (rightturn_count_1 when St_1_Stop(ck));
+  timer_St_1_Stop = (timer_1 when St_1_Stop(ck));
+  dir_St_1_Stop = 0;
+  flag_St_1_Stop = false;
+  v_r_St_1_Stop = 0;
+  v_l_St_1_Stop = 0;
+  nr_St_1_Stop =
+    if (switch_condition when St_1_Stop(ck)) then true else v_181;
+  ns_St_1_Stop =
+    if (switch_condition when St_1_Stop(ck))
+    then St_1_BlackForward
+    else v_180;
+  v_181 = if v_171 then true else v_179;
+  v_180 = if v_171 then St_1_Left else v_178;
+  v_179 = if (c3 when St_1_Stop(ck)) then true else v_177;
+  v_178 = if (c3 when St_1_Stop(ck)) then St_1_Right else v_176;
+  v_177 = if (c4 when St_1_Stop(ck)) then true else v_175;
+  v_176 = if (c4 when St_1_Stop(ck)) then St_1_DriftRight else v_174;
+  v_175 = if (c5 when St_1_Stop(ck)) then true else v_173;
+  v_174 = if (c5 when St_1_Stop(ck)) then St_1_DriftLeft else v_172;
+  v_173 = if true then true else false;
+  v_172 = if true then St_1_Forward else St_1_Stop;
+  v_171 = (v_170 & (c2 when St_1_Stop(ck)));
+  v_170 = not((c1 when St_1_Stop(ck)));
+  rightturn_count_St_1_Left = (rightturn_count_1 when St_1_Left(ck));
+  timer_St_1_Left = (timer_1 when St_1_Left(ck));
+  dir_St_1_Left = 4;
+  flag_St_1_Left = false;
+  v_r_St_1_Left = (wspeed when St_1_Left(ck));
+  v_l_St_1_Left = (wspeed when St_1_Left(ck));
+  nr_St_1_Left = if (c1 when St_1_Left(ck)) then true else v_169;
+  ns_St_1_Left = if (c1 when St_1_Left(ck)) then St_1_Stop else v_168;
+  v_169 = if (switch_condition when St_1_Left(ck)) then true else v_167;
+  v_168 =
+    if (switch_condition when St_1_Left(ck))
+    then St_1_BlackForward
+    else v_166;
+  v_167 = if (c3 when St_1_Left(ck)) then true else v_165;
+  v_166 = if (c3 when St_1_Left(ck)) then St_1_Right else v_164;
+  v_165 = if (c4 when St_1_Left(ck)) then true else v_163;
+  v_164 = if (c4 when St_1_Left(ck)) then St_1_DriftRight else v_162;
+  v_163 = if (c5 when St_1_Left(ck)) then true else v_161;
+  v_162 = if (c5 when St_1_Left(ck)) then St_1_DriftLeft else v_160;
+  v_161 = if true then true else false;
+  v_160 = if true then St_1_Forward else St_1_Left;
+  rightturn_count_St_1_Right = (rightturn_count_1 when St_1_Right(ck));
+  timer_St_1_Right = (timer_1 when St_1_Right(ck));
+  dir_St_1_Right = 5;
+  flag_St_1_Right = false;
+  v_r_St_1_Right = (wspeed when St_1_Right(ck));
+  v_l_St_1_Right = (wspeed when St_1_Right(ck));
+  nr_St_1_Right = if (c1 when St_1_Right(ck)) then true else v_159;
+  ns_St_1_Right = if (c1 when St_1_Right(ck)) then St_1_Stop else v_158;
+  v_159 = if (switch_condition when St_1_Right(ck)) then true else v_157;
+  v_158 =
+    if (switch_condition when St_1_Right(ck))
+    then St_1_BlackForward
+    else v_156;
+  v_157 = if (c2 when St_1_Right(ck)) then true else v_155;
+  v_156 = if (c2 when St_1_Right(ck)) then St_1_Left else v_154;
+  v_155 = if (c3 when St_1_Right(ck)) then true else v_153;
+  v_154 = if (c3 when St_1_Right(ck)) then St_1_Right else v_152;
+  v_153 = if (c4 when St_1_Right(ck)) then true else v_151;
+  v_152 = if (c4 when St_1_Right(ck)) then St_1_DriftRight else v_150;
+  v_151 = if (c5 when St_1_Right(ck)) then true else v_149;
+  v_150 = if (c5 when St_1_Right(ck)) then St_1_DriftLeft else v_148;
+  v_149 = if true then true else false;
+  v_148 = if true then St_1_Forward else St_1_Right;
+  rightturn_count_St_1_DriftLeft =
+    (rightturn_count_1 when St_1_DriftLeft(ck));
+  timer_St_1_DriftLeft = (timer_1 when St_1_DriftLeft(ck));
+  flag_St_1_DriftLeft = false;
+  dir_St_1_DriftLeft = 3;
+  v_r_St_1_DriftLeft =
+    ((wspeed when St_1_DriftLeft(ck)) + (pid when St_1_DriftLeft(ck)));
+  v_l_St_1_DriftLeft = 0;
+  nr_St_1_DriftLeft = if (c1 when St_1_DriftLeft(ck)) then true else v_147;
+  ns_St_1_DriftLeft =
+    if (c1 when St_1_DriftLeft(ck)) then St_1_Stop else v_146;
+  v_147 = if (switch_condition when St_1_DriftLeft(ck)) then true else v_145;
+  v_146 =
+    if (switch_condition when St_1_DriftLeft(ck))
+    then St_1_BlackForward
+    else v_144;
+  v_145 = if (c2 when St_1_DriftLeft(ck)) then true else v_143;
+  v_144 = if (c2 when St_1_DriftLeft(ck)) then St_1_Left else v_142;
+  v_143 = if (c3 when St_1_DriftLeft(ck)) then true else v_141;
+  v_142 = if (c3 when St_1_DriftLeft(ck)) then St_1_Right else v_140;
+  v_141 = if (c4 when St_1_DriftLeft(ck)) then true else v_139;
+  v_140 = if (c4 when St_1_DriftLeft(ck)) then St_1_DriftRight else v_138;
+  v_139 = if (c5 when St_1_DriftLeft(ck)) then true else v_137;
+  v_138 = if (c5 when St_1_DriftLeft(ck)) then St_1_DriftLeft else v_136;
+  v_137 = if true then true else false;
+  v_136 = if true then St_1_Forward else St_1_DriftLeft;
+  rightturn_count_St_1_DriftRight =
+    (rightturn_count_1 when St_1_DriftRight(ck));
+  timer_St_1_DriftRight = (timer_1 when St_1_DriftRight(ck));
+  flag_St_1_DriftRight = false;
+  dir_St_1_DriftRight = 2;
+  v_r_St_1_DriftRight = 0;
+  v_l_St_1_DriftRight =
+    ((wspeed when St_1_DriftRight(ck)) + (pid when St_1_DriftRight(ck)));
+  nr_St_1_DriftRight = if (c1 when St_1_DriftRight(ck)) then true else v_135;
+  ns_St_1_DriftRight =
+    if (c1 when St_1_DriftRight(ck)) then St_1_Stop else v_134;
+  v_135 = if (switch_condition when St_1_DriftRight(ck)) then true else v_133;
+  v_134 =
+    if (switch_condition when St_1_DriftRight(ck))
+    then St_1_BlackForward
+    else v_132;
+  v_133 = if (c2 when St_1_DriftRight(ck)) then true else v_131;
+  v_132 = if (c2 when St_1_DriftRight(ck)) then St_1_Left else v_130;
+  v_131 = if (c3 when St_1_DriftRight(ck)) then true else v_129;
+  v_130 = if (c3 when St_1_DriftRight(ck)) then St_1_Right else v_128;
+  v_129 = if (c4 when St_1_DriftRight(ck)) then true else v_127;
+  v_128 = if (c4 when St_1_DriftRight(ck)) then St_1_DriftRight else v_126;
+  v_127 = if (c5 when St_1_DriftRight(ck)) then true else v_125;
+  v_126 = if (c5 when St_1_DriftRight(ck)) then St_1_DriftLeft else v_124;
+  v_125 = if true then true else false;
+  v_124 = if true then St_1_Forward else St_1_DriftRight;
+  rightturn_count_St_1_BlackForward =
+    (rightturn_count_1 when St_1_BlackForward(ck));
+  timer_St_1_BlackForward = (timer_1 when St_1_BlackForward(ck));
+  dir_St_1_BlackForward = 1;
+  flag_St_1_BlackForward = true;
+  v_r_St_1_BlackForward = (bspeed when St_1_BlackForward(ck));
+  v_l_St_1_BlackForward = (bspeed when St_1_BlackForward(ck));
+  nr_St_1_BlackForward = if v_103 then true else v_123;
+  ns_St_1_BlackForward = if v_103 then St_1_ObstacleAvoidance else v_122;
+  v_123 = if v_105 then true else v_121;
+  v_122 = if v_105 then St_1_BlackRight else v_120;
+  v_121 = if v_109 then true else v_119;
+  v_120 = if v_109 then St_1_BlackLeft else v_118;
+  v_119 = if v_111 then true else v_117;
+  v_118 = if v_111 then St_1_BlackStop else v_116;
+  v_117 = if (b4 when St_1_BlackForward(ck)) then true else v_115;
+  v_116 =
+    if (b4 when St_1_BlackForward(ck)) then St_1_BlackDriftRight else v_114;
+  v_115 = if (b5 when St_1_BlackForward(ck)) then true else v_113;
+  v_114 =
+    if (b5 when St_1_BlackForward(ck)) then St_1_BlackDriftLeft else v_112;
+  v_113 = if true then true else false;
+  v_112 = if true then St_1_BlackForward else St_1_BlackForward;
+  v_111 = ((blacknodedetected when St_1_BlackForward(ck)) & v_110);
+  v_110 = ((count when St_1_BlackForward(ck)) > 6);
+  v_109 = ((blacknodedetected when St_1_BlackForward(ck)) & v_108);
+  v_108 = (v_106 & v_107);
+  v_107 = ((count when St_1_BlackForward(ck)) <= 6);
+  v_106 = ((count when St_1_BlackForward(ck)) > 3);
+  v_105 = ((blacknodedetected when St_1_BlackForward(ck)) & v_104);
+  v_104 = ((count when St_1_BlackForward(ck)) <= 3);
+  v_103 = ((ir_d_front when St_1_BlackForward(ck)) > ~-(1));
+  rightturn_count_St_1_BlackStop =
+    (rightturn_count_1 when St_1_BlackStop(ck));
+  timer_St_1_BlackStop = (timer_1 when St_1_BlackStop(ck));
+  flag_St_1_BlackStop = true;
+  dir_St_1_BlackStop = 0;
+  v_r_St_1_BlackStop = 0;
+  v_l_St_1_BlackStop = 0;
+  nr_St_1_BlackStop = if true then true else false;
+  ns_St_1_BlackStop = if true then St_1_BlackStop else St_1_BlackStop;
+  rightturn_count_St_1_BlackLeft =
+    (rightturn_count_1 when St_1_BlackLeft(ck));
+  timer_St_1_BlackLeft = (timer_1 when St_1_BlackLeft(ck));
+  dir_St_1_BlackLeft = 4;
+  flag_St_1_BlackLeft = true;
+  v_r_St_1_BlackLeft = (bspeed when St_1_BlackLeft(ck));
+  v_l_St_1_BlackLeft = (bspeed when St_1_BlackLeft(ck));
+  nr_St_1_BlackLeft =
+    if (blacknodedetected when St_1_BlackLeft(ck)) then true else v_102;
+  ns_St_1_BlackLeft =
+    if (blacknodedetected when St_1_BlackLeft(ck))
+    then St_1_BlackLeft
+    else v_101;
+  v_102 = if true then true else false;
+  v_101 = if true then St_1_BlackForward else St_1_BlackLeft;
+  rightturn_count_St_1_BlackRight =
+    (rightturn_count_1 when St_1_BlackRight(ck));
+  timer_St_1_BlackRight = (timer_1 when St_1_BlackRight(ck));
+  dir_St_1_BlackRight = 5;
+  flag_St_1_BlackRight = true;
+  v_r_St_1_BlackRight = (bspeed when St_1_BlackRight(ck));
+  v_l_St_1_BlackRight = (bspeed when St_1_BlackRight(ck));
+  nr_St_1_BlackRight =
+    if (blacknodedetected when St_1_BlackRight(ck)) then true else v_100;
+  ns_St_1_BlackRight =
+    if (blacknodedetected when St_1_BlackRight(ck))
+    then St_1_BlackRight
+    else v_99;
+  v_100 = if true then true else false;
+  v_99 = if true then St_1_BlackForward else St_1_BlackRight;
+  rightturn_count_St_1_BlackDriftLeft =
+    (rightturn_count_1 when St_1_BlackDriftLeft(ck));
+  timer_St_1_BlackDriftLeft = (timer_1 when St_1_BlackDriftLeft(ck));
+  flag_St_1_BlackDriftLeft = true;
+  dir_St_1_BlackDriftLeft = 3;
+  v_r_St_1_BlackDriftLeft =
+    ((bspeed when St_1_BlackDriftLeft(ck)) +
+     (pid when St_1_BlackDriftLeft(ck)));
+  v_l_St_1_BlackDriftLeft = 0;
+  nr_St_1_BlackDriftLeft =
+    if (blacknodedetected when St_1_BlackDriftLeft(ck)) then true else v_98;
+  ns_St_1_BlackDriftLeft =
+    if (blacknodedetected when St_1_BlackDriftLeft(ck))
+    then St_1_BlackRight
+    else v_97;
+  v_98 =
+    if (switch_condition when St_1_BlackDriftLeft(ck)) then true else v_96;
+  v_97 =
+    if (switch_condition when St_1_BlackDriftLeft(ck))
+    then St_1_BlackForward
+    else v_95;
+  v_96 = if (b4 when St_1_BlackDriftLeft(ck)) then true else v_94;
+  v_95 =
+    if (b4 when St_1_BlackDriftLeft(ck)) then St_1_BlackDriftRight else v_93;
+  v_94 = if (b5 when St_1_BlackDriftLeft(ck)) then true else v_92;
+  v_93 =
+    if (b5 when St_1_BlackDriftLeft(ck)) then St_1_BlackDriftLeft else v_91;
+  v_92 = if true then true else false;
+  v_91 = if true then St_1_BlackForward else St_1_BlackDriftLeft;
+  rightturn_count_St_1_BlackDriftRight =
+    (rightturn_count_1 when St_1_BlackDriftRight(ck));
+  timer_St_1_BlackDriftRight = (timer_1 when St_1_BlackDriftRight(ck));
+  flag_St_1_BlackDriftRight = true;
+  dir_St_1_BlackDriftRight = 2;
+  v_r_St_1_BlackDriftRight = 0;
+  v_l_St_1_BlackDriftRight =
+    ((bspeed when St_1_BlackDriftRight(ck)) +
+     (pid when St_1_BlackDriftRight(ck)));
+  nr_St_1_BlackDriftRight =
+    if (blacknodedetected when St_1_BlackDriftRight(ck)) then true else v_90;
+  ns_St_1_BlackDriftRight =
+    if (blacknodedetected when St_1_BlackDriftRight(ck))
+    then St_1_BlackRight
+    else v_89;
+  v_90 =
+    if (switch_condition when St_1_BlackDriftRight(ck)) then true else v_88;
+  v_89 =
+    if (switch_condition when St_1_BlackDriftRight(ck))
+    then St_1_BlackForward
+    else v_87;
+  v_88 = if (b4 when St_1_BlackDriftRight(ck)) then true else v_86;
+  v_87 =
+    if (b4 when St_1_BlackDriftRight(ck)) then St_1_BlackDriftRight else v_85;
+  v_86 = if (b5 when St_1_BlackDriftRight(ck)) then true else v_84;
+  v_85 =
+    if (b5 when St_1_BlackDriftRight(ck)) then St_1_BlackDriftLeft else v_83;
+  v_84 = if true then true else false;
+  v_83 = if true then St_1_BlackForward else St_1_BlackDriftRight;
+  rightturn_count_St_1_ObstacleAvoidance =
+    (rightturn_count_1 when St_1_ObstacleAvoidance(ck));
+  timer_St_1_ObstacleAvoidance = if v_80 then 100 else v_82;
+  v_82 = (v_81 - 1);
+  v_81 = pre (timer when St_1_ObstacleAvoidance(ck));
+  v_80 = if v_79 then true else (r when St_1_ObstacleAvoidance(ck));
+  v_79 = true fby false;
+  flag_St_1_ObstacleAvoidance = true;
+  v_r_St_1_ObstacleAvoidance = 0;
+  v_l_St_1_ObstacleAvoidance = 0;
+  dir_St_1_ObstacleAvoidance = 0;
+  nr_St_1_ObstacleAvoidance = if v_78 then true else false;
+  ns_St_1_ObstacleAvoidance =
+    if v_78 then St_1_RightTurn1 else St_1_ObstacleAvoidance;
+  v_78 = ((timer when St_1_ObstacleAvoidance(ck)) <= 0);
+  rightturn_count_St_1_RightTurn1 =
+    (rightturn_count_1 when St_1_RightTurn1(ck));
+  timer_St_1_RightTurn1 = if v_75 then 90 else v_77;
+  v_77 = (v_76 - 1);
+  v_76 = pre (timer when St_1_RightTurn1(ck));
+  v_75 = if v_74 then true else (r when St_1_RightTurn1(ck));
+  v_74 = true fby false;
+  flag_St_1_RightTurn1 = true;
+  v_r_St_1_RightTurn1 = (oasspeed when St_1_RightTurn1(ck));
+  v_l_St_1_RightTurn1 = (oasspeed when St_1_RightTurn1(ck));
+  dir_St_1_RightTurn1 = 5;
+  nr_St_1_RightTurn1 = if v_73 then true else false;
+  ns_St_1_RightTurn1 = if v_73 then St_1_Move1 else St_1_RightTurn1;
+  v_73 = ((timer when St_1_RightTurn1(ck)) <= 0);
+  rightturn_count_St_1_Move1 = (rightturn_count_1 when St_1_Move1(ck));
+  timer_St_1_Move1 = if v_70 then 100 else v_72;
+  v_72 = (v_71 - 1);
+  v_71 = pre (timer when St_1_Move1(ck));
+  v_70 = if v_69 then true else (r when St_1_Move1(ck));
+  v_69 = true fby false;
+  flag_St_1_Move1 = true;
+  v_r_St_1_Move1 = (oasspeed when St_1_Move1(ck));
+  v_l_St_1_Move1 = (oasspeed when St_1_Move1(ck));
+  dir_St_1_Move1 = 1;
+  nr_St_1_Move1 = if v_68 then true else false;
+  ns_St_1_Move1 = if v_68 then St_1_Forward1 else St_1_Move1;
+  v_68 = ((timer when St_1_Move1(ck)) <= 0);
+  timer_St_1_Forward1 = (timer_1 when St_1_Forward1(ck));
+  flag_St_1_Forward1 = true;
+  v_r_St_1_Forward1 = (oasspeed when St_1_Forward1(ck));
+  v_l_St_1_Forward1 = (oasspeed when St_1_Forward1(ck));
+  dir_St_1_Forward1 = 1;
+  rightturn_count_St_1_Forward1 = if v_65 then 0 else v_67;
+  v_67 = (v_66 + 1);
+  v_66 = pre (rightturn_count when St_1_Forward1(ck));
+  v_65 = if v_64 then true else (r when St_1_Forward1(ck));
+  v_64 = true fby false;
+  nr_St_1_Forward1 = if v_63 then true else false;
+  ns_St_1_Forward1 = if v_63 then St_1_Move2 else St_1_Forward1;
+  v_63 = ((ir_d_left when St_1_Forward1(ck)) = 1);
+  rightturn_count_St_1_Move2 = (rightturn_count_1 when St_1_Move2(ck));
+  timer_St_1_Move2 = if v_60 then 75 else v_62;
+  v_62 = (v_61 - 1);
+  v_61 = pre (timer when St_1_Move2(ck));
+  v_60 = if v_59 then true else (r when St_1_Move2(ck));
+  v_59 = true fby false;
+  flag_St_1_Move2 = true;
+  v_r_St_1_Move2 = (oasspeed when St_1_Move2(ck));
+  v_l_St_1_Move2 = (oasspeed when St_1_Move2(ck));
+  dir_St_1_Move2 = 1;
+  nr_St_1_Move2 = if v_58 then true else false;
+  ns_St_1_Move2 = if v_58 then St_1_LeftTurn1 else St_1_Move2;
+  v_58 = ((timer when St_1_Move2(ck)) <= 0);
+  rightturn_count_St_1_LeftTurn1 =
+    (rightturn_count_1 when St_1_LeftTurn1(ck));
+  timer_St_1_LeftTurn1 = if v_55 then 37 else v_57;
+  v_57 = (v_56 - 1);
+  v_56 = pre (timer when St_1_LeftTurn1(ck));
+  v_55 = if v_54 then true else (r when St_1_LeftTurn1(ck));
+  v_54 = true fby false;
+  flag_St_1_LeftTurn1 = true;
+  v_r_St_1_LeftTurn1 = (oasspeed when St_1_LeftTurn1(ck));
+  v_l_St_1_LeftTurn1 = (oasspeed when St_1_LeftTurn1(ck));
+  dir_St_1_LeftTurn1 = 4;
+  nr_St_1_LeftTurn1 = if v_53 then true else false;
+  ns_St_1_LeftTurn1 = if v_53 then St_1_Move3 else St_1_LeftTurn1;
+  v_53 = ((timer when St_1_LeftTurn1(ck)) <= 0);
+  rightturn_count_St_1_Move3 = (rightturn_count_1 when St_1_Move3(ck));
+  timer_St_1_Move3 = if v_50 then 200 else v_52;
+  v_52 = (v_51 - 1);
+  v_51 = pre (timer when St_1_Move3(ck));
+  v_50 = if v_49 then true else (r when St_1_Move3(ck));
+  v_49 = true fby false;
+  flag_St_1_Move3 = true;
+  v_r_St_1_Move3 = (oasspeed when St_1_Move3(ck));
+  v_l_St_1_Move3 = (oasspeed when St_1_Move3(ck));
+  dir_St_1_Move3 = 1;
+  nr_St_1_Move3 = if v_48 then true else false;
+  ns_St_1_Move3 = if v_48 then St_1_Forward2 else St_1_Move3;
+  v_48 = ((timer when St_1_Move3(ck)) <= 0);
+  rightturn_count_St_1_Forward2 = (rightturn_count_1 when St_1_Forward2(ck));
+  timer_St_1_Forward2 = (timer_1 when St_1_Forward2(ck));
+  flag_St_1_Forward2 = true;
+  v_r_St_1_Forward2 = (oasspeed when St_1_Forward2(ck));
+  v_l_St_1_Forward2 = (oasspeed when St_1_Forward2(ck));
+  dir_St_1_Forward2 = 1;
+  nr_St_1_Forward2 = if v_47 then true else false;
+  ns_St_1_Forward2 = if v_47 then St_1_Move4 else St_1_Forward2;
+  v_47 = ((ir_d_left when St_1_Forward2(ck)) = 1);
+  rightturn_count_St_1_Move4 = (rightturn_count_1 when St_1_Move4(ck));
+  timer_St_1_Move4 = if v_44 then 75 else v_46;
+  v_46 = (v_45 - 1);
+  v_45 = pre (timer when St_1_Move4(ck));
+  v_44 = if v_43 then true else (r when St_1_Move4(ck));
+  v_43 = true fby false;
+  flag_St_1_Move4 = true;
+  v_r_St_1_Move4 = (oasspeed when St_1_Move4(ck));
+  v_l_St_1_Move4 = (oasspeed when St_1_Move4(ck));
+  dir_St_1_Move4 = 1;
+  nr_St_1_Move4 = if v_42 then true else false;
+  ns_St_1_Move4 = if v_42 then St_1_LeftTurn2 else St_1_Move4;
+  v_42 = ((timer when St_1_Move4(ck)) <= 0);
+  rightturn_count_St_1_LeftTurn2 =
+    (rightturn_count_1 when St_1_LeftTurn2(ck));
+  timer_St_1_LeftTurn2 = if v_39 then 35 else v_41;
+  v_41 = (v_40 - 1);
+  v_40 = pre (timer when St_1_LeftTurn2(ck));
+  v_39 = if v_38 then true else (r when St_1_LeftTurn2(ck));
+  v_38 = true fby false;
+  flag_St_1_LeftTurn2 = true;
+  v_r_St_1_LeftTurn2 = (oasspeed when St_1_LeftTurn2(ck));
+  v_l_St_1_LeftTurn2 = (oasspeed when St_1_LeftTurn2(ck));
+  dir_St_1_LeftTurn2 = 4;
+  nr_St_1_LeftTurn2 = if v_37 then true else false;
+  ns_St_1_LeftTurn2 = if v_37 then St_1_Move5 else St_1_LeftTurn2;
+  v_37 = ((timer when St_1_LeftTurn2(ck)) <= 0);
+  rightturn_count_St_1_Move5 = (rightturn_count_1 when St_1_Move5(ck));
+  timer_St_1_Move5 = (timer_1 when St_1_Move5(ck));
+  flag_St_1_Move5 = true;
+  v_r_St_1_Move5 = (oasspeed when St_1_Move5(ck));
+  v_l_St_1_Move5 = (oasspeed when St_1_Move5(ck));
+  dir_St_1_Move5 = 1;
+  nr_St_1_Move5 =
+    if (blacknodedetected when St_1_Move5(ck)) then true else false;
+  ns_St_1_Move5 =
+    if (blacknodedetected when St_1_Move5(ck))
+    then St_1_RightTurn3
+    else St_1_Move5;
+  rightturn_count_St_1_RightTurn3 =
+    (rightturn_count_1 when St_1_RightTurn3(ck));
+  timer_St_1_RightTurn3 = if v_34 then 80 else v_36;
+  v_36 = (v_35 - 1);
+  v_35 = pre (timer when St_1_RightTurn3(ck));
+  v_34 = if v_33 then true else (r when St_1_RightTurn3(ck));
+  v_33 = true fby false;
+  flag_St_1_RightTurn3 = true;
+  v_r_St_1_RightTurn3 = (oasspeed when St_1_RightTurn3(ck));
+  v_l_St_1_RightTurn3 = (oasspeed when St_1_RightTurn3(ck));
+  dir_St_1_RightTurn3 = 5;
+  nr_St_1_RightTurn3 = if v_32 then true else false;
+  ns_St_1_RightTurn3 = if v_32 then St_1_BlackRight else St_1_RightTurn3;
+  v_32 = ((timer when St_1_RightTurn3(ck)) <= 0);
+  v_l =
+    merge ck
+      (St_1_RightTurn3 -> v_l_St_1_RightTurn3)(St_1_Move5 -> v_l_St_1_Move5)
+      (St_1_LeftTurn2 -> v_l_St_1_LeftTurn2)(St_1_Move4 -> v_l_St_1_Move4)
+      (St_1_Forward2 -> v_l_St_1_Forward2)(St_1_Move3 -> v_l_St_1_Move3)
+      (St_1_LeftTurn1 -> v_l_St_1_LeftTurn1)(St_1_Move2 -> v_l_St_1_Move2)
+      (St_1_Forward1 -> v_l_St_1_Forward1)(St_1_Move1 -> v_l_St_1_Move1)
+      (St_1_RightTurn1 -> v_l_St_1_RightTurn1)
+      (St_1_ObstacleAvoidance -> v_l_St_1_ObstacleAvoidance)
+      (St_1_BlackDriftRight -> v_l_St_1_BlackDriftRight)
+      (St_1_BlackDriftLeft -> v_l_St_1_BlackDriftLeft)
+      (St_1_BlackRight -> v_l_St_1_BlackRight)
+      (St_1_BlackLeft -> v_l_St_1_BlackLeft)
+      (St_1_BlackStop -> v_l_St_1_BlackStop)
+      (St_1_BlackForward -> v_l_St_1_BlackForward)
+      (St_1_DriftRight -> v_l_St_1_DriftRight)
+      (St_1_DriftLeft -> v_l_St_1_DriftLeft)(St_1_Right -> v_l_St_1_Right)
+      (St_1_Left -> v_l_St_1_Left)(St_1_Stop -> v_l_St_1_Stop)
+      (St_1_Forward -> v_l_St_1_Forward);
+  v_r =
+    merge ck
+      (St_1_RightTurn3 -> v_r_St_1_RightTurn3)(St_1_Move5 -> v_r_St_1_Move5)
+      (St_1_LeftTurn2 -> v_r_St_1_LeftTurn2)(St_1_Move4 -> v_r_St_1_Move4)
+      (St_1_Forward2 -> v_r_St_1_Forward2)(St_1_Move3 -> v_r_St_1_Move3)
+      (St_1_LeftTurn1 -> v_r_St_1_LeftTurn1)(St_1_Move2 -> v_r_St_1_Move2)
+      (St_1_Forward1 -> v_r_St_1_Forward1)(St_1_Move1 -> v_r_St_1_Move1)
+      (St_1_RightTurn1 -> v_r_St_1_RightTurn1)
+      (St_1_ObstacleAvoidance -> v_r_St_1_ObstacleAvoidance)
+      (St_1_BlackDriftRight -> v_r_St_1_BlackDriftRight)
+      (St_1_BlackDriftLeft -> v_r_St_1_BlackDriftLeft)
+      (St_1_BlackRight -> v_r_St_1_BlackRight)
+      (St_1_BlackLeft -> v_r_St_1_BlackLeft)
+      (St_1_BlackStop -> v_r_St_1_BlackStop)
+      (St_1_BlackForward -> v_r_St_1_BlackForward)
+      (St_1_DriftRight -> v_r_St_1_DriftRight)
+      (St_1_DriftLeft -> v_r_St_1_DriftLeft)(St_1_Right -> v_r_St_1_Right)
+      (St_1_Left -> v_r_St_1_Left)(St_1_Stop -> v_r_St_1_Stop)
+      (St_1_Forward -> v_r_St_1_Forward);
+  dir =
+    merge ck
+      (St_1_RightTurn3 -> dir_St_1_RightTurn3)(St_1_Move5 -> dir_St_1_Move5)
+      (St_1_LeftTurn2 -> dir_St_1_LeftTurn2)(St_1_Move4 -> dir_St_1_Move4)
+      (St_1_Forward2 -> dir_St_1_Forward2)(St_1_Move3 -> dir_St_1_Move3)
+      (St_1_LeftTurn1 -> dir_St_1_LeftTurn1)(St_1_Move2 -> dir_St_1_Move2)
+      (St_1_Forward1 -> dir_St_1_Forward1)(St_1_Move1 -> dir_St_1_Move1)
+      (St_1_RightTurn1 -> dir_St_1_RightTurn1)
+      (St_1_ObstacleAvoidance -> dir_St_1_ObstacleAvoidance)
+      (St_1_BlackDriftRight -> dir_St_1_BlackDriftRight)
+      (St_1_BlackDriftLeft -> dir_St_1_BlackDriftLeft)
+      (St_1_BlackRight -> dir_St_1_BlackRight)
+      (St_1_BlackLeft -> dir_St_1_BlackLeft)
+      (St_1_BlackStop -> dir_St_1_BlackStop)
+      (St_1_BlackForward -> dir_St_1_BlackForward)
+      (St_1_DriftRight -> dir_St_1_DriftRight)
+      (St_1_DriftLeft -> dir_St_1_DriftLeft)(St_1_Right -> dir_St_1_Right)
+      (St_1_Left -> dir_St_1_Left)(St_1_Stop -> dir_St_1_Stop)
+      (St_1_Forward -> dir_St_1_Forward);
+  flag =
+    merge ck
+      (St_1_RightTurn3 -> flag_St_1_RightTurn3)
+      (St_1_Move5 -> flag_St_1_Move5)(St_1_LeftTurn2 -> flag_St_1_LeftTurn2)
+      (St_1_Move4 -> flag_St_1_Move4)(St_1_Forward2 -> flag_St_1_Forward2)
+      (St_1_Move3 -> flag_St_1_Move3)(St_1_LeftTurn1 -> flag_St_1_LeftTurn1)
+      (St_1_Move2 -> flag_St_1_Move2)(St_1_Forward1 -> flag_St_1_Forward1)
+      (St_1_Move1 -> flag_St_1_Move1)
+      (St_1_RightTurn1 -> flag_St_1_RightTurn1)
+      (St_1_ObstacleAvoidance -> flag_St_1_ObstacleAvoidance)
+      (St_1_BlackDriftRight -> flag_St_1_BlackDriftRight)
+      (St_1_BlackDriftLeft -> flag_St_1_BlackDriftLeft)
+      (St_1_BlackRight -> flag_St_1_BlackRight)
+      (St_1_BlackLeft -> flag_St_1_BlackLeft)
+      (St_1_BlackStop -> flag_St_1_BlackStop)
+      (St_1_BlackForward -> flag_St_1_BlackForward)
+      (St_1_DriftRight -> flag_St_1_DriftRight)
+      (St_1_DriftLeft -> flag_St_1_DriftLeft)(St_1_Right -> flag_St_1_Right)
+      (St_1_Left -> flag_St_1_Left)(St_1_Stop -> flag_St_1_Stop)
+      (St_1_Forward -> flag_St_1_Forward);
+  timer =
+    merge ck
+      (St_1_RightTurn3 -> timer_St_1_RightTurn3)
+      (St_1_Move5 -> timer_St_1_Move5)
+      (St_1_LeftTurn2 -> timer_St_1_LeftTurn2)
+      (St_1_Move4 -> timer_St_1_Move4)(St_1_Forward2 -> timer_St_1_Forward2)
+      (St_1_Move3 -> timer_St_1_Move3)
+      (St_1_LeftTurn1 -> timer_St_1_LeftTurn1)
+      (St_1_Move2 -> timer_St_1_Move2)(St_1_Forward1 -> timer_St_1_Forward1)
+      (St_1_Move1 -> timer_St_1_Move1)
+      (St_1_RightTurn1 -> timer_St_1_RightTurn1)
+      (St_1_ObstacleAvoidance -> timer_St_1_ObstacleAvoidance)
+      (St_1_BlackDriftRight -> timer_St_1_BlackDriftRight)
+      (St_1_BlackDriftLeft -> timer_St_1_BlackDriftLeft)
+      (St_1_BlackRight -> timer_St_1_BlackRight)
+      (St_1_BlackLeft -> timer_St_1_BlackLeft)
+      (St_1_BlackStop -> timer_St_1_BlackStop)
+      (St_1_BlackForward -> timer_St_1_BlackForward)
+      (St_1_DriftRight -> timer_St_1_DriftRight)
+      (St_1_DriftLeft -> timer_St_1_DriftLeft)
+      (St_1_Right -> timer_St_1_Right)(St_1_Left -> timer_St_1_Left)
+      (St_1_Stop -> timer_St_1_Stop)(St_1_Forward -> timer_St_1_Forward);
+  rightturn_count =
+    merge ck
+      (St_1_RightTurn3 -> rightturn_count_St_1_RightTurn3)
+      (St_1_Move5 -> rightturn_count_St_1_Move5)
+      (St_1_LeftTurn2 -> rightturn_count_St_1_LeftTurn2)
+      (St_1_Move4 -> rightturn_count_St_1_Move4)
+      (St_1_Forward2 -> rightturn_count_St_1_Forward2)
+      (St_1_Move3 -> rightturn_count_St_1_Move3)
+      (St_1_LeftTurn1 -> rightturn_count_St_1_LeftTurn1)
+      (St_1_Move2 -> rightturn_count_St_1_Move2)
+      (St_1_Forward1 -> rightturn_count_St_1_Forward1)
+      (St_1_Move1 -> rightturn_count_St_1_Move1)
+      (St_1_RightTurn1 -> rightturn_count_St_1_RightTurn1)
+      (St_1_ObstacleAvoidance -> rightturn_count_St_1_ObstacleAvoidance)
+      (St_1_BlackDriftRight -> rightturn_count_St_1_BlackDriftRight)
+      (St_1_BlackDriftLeft -> rightturn_count_St_1_BlackDriftLeft)
+      (St_1_BlackRight -> rightturn_count_St_1_BlackRight)
+      (St_1_BlackLeft -> rightturn_count_St_1_BlackLeft)
+      (St_1_BlackStop -> rightturn_count_St_1_BlackStop)
+      (St_1_BlackForward -> rightturn_count_St_1_BlackForward)
+      (St_1_DriftRight -> rightturn_count_St_1_DriftRight)
+      (St_1_DriftLeft -> rightturn_count_St_1_DriftLeft)
+      (St_1_Right -> rightturn_count_St_1_Right)
+      (St_1_Left -> rightturn_count_St_1_Left)
+      (St_1_Stop -> rightturn_count_St_1_Stop)
+      (St_1_Forward -> rightturn_count_St_1_Forward);
+  ns =
+    merge ck
+      (St_1_RightTurn3 -> ns_St_1_RightTurn3)(St_1_Move5 -> ns_St_1_Move5)
+      (St_1_LeftTurn2 -> ns_St_1_LeftTurn2)(St_1_Move4 -> ns_St_1_Move4)
+      (St_1_Forward2 -> ns_St_1_Forward2)(St_1_Move3 -> ns_St_1_Move3)
+      (St_1_LeftTurn1 -> ns_St_1_LeftTurn1)(St_1_Move2 -> ns_St_1_Move2)
+      (St_1_Forward1 -> ns_St_1_Forward1)(St_1_Move1 -> ns_St_1_Move1)
+      (St_1_RightTurn1 -> ns_St_1_RightTurn1)
+      (St_1_ObstacleAvoidance -> ns_St_1_ObstacleAvoidance)
+      (St_1_BlackDriftRight -> ns_St_1_BlackDriftRight)
+      (St_1_BlackDriftLeft -> ns_St_1_BlackDriftLeft)
+      (St_1_BlackRight -> ns_St_1_BlackRight)
+      (St_1_BlackLeft -> ns_St_1_BlackLeft)
+      (St_1_BlackStop -> ns_St_1_BlackStop)
+      (St_1_BlackForward -> ns_St_1_BlackForward)
+      (St_1_DriftRight -> ns_St_1_DriftRight)
+      (St_1_DriftLeft -> ns_St_1_DriftLeft)(St_1_Right -> ns_St_1_Right)
+      (St_1_Left -> ns_St_1_Left)(St_1_Stop -> ns_St_1_Stop)
+      (St_1_Forward -> ns_St_1_Forward);
+  nr =
+    merge ck
+      (St_1_RightTurn3 -> nr_St_1_RightTurn3)(St_1_Move5 -> nr_St_1_Move5)
+      (St_1_LeftTurn2 -> nr_St_1_LeftTurn2)(St_1_Move4 -> nr_St_1_Move4)
+      (St_1_Forward2 -> nr_St_1_Forward2)(St_1_Move3 -> nr_St_1_Move3)
+      (St_1_LeftTurn1 -> nr_St_1_LeftTurn1)(St_1_Move2 -> nr_St_1_Move2)
+      (St_1_Forward1 -> nr_St_1_Forward1)(St_1_Move1 -> nr_St_1_Move1)
+      (St_1_RightTurn1 -> nr_St_1_RightTurn1)
+      (St_1_ObstacleAvoidance -> nr_St_1_ObstacleAvoidance)
+      (St_1_BlackDriftRight -> nr_St_1_BlackDriftRight)
+      (St_1_BlackDriftLeft -> nr_St_1_BlackDriftLeft)
+      (St_1_BlackRight -> nr_St_1_BlackRight)
+      (St_1_BlackLeft -> nr_St_1_BlackLeft)
+      (St_1_BlackStop -> nr_St_1_BlackStop)
+      (St_1_BlackForward -> nr_St_1_BlackForward)
+      (St_1_DriftRight -> nr_St_1_DriftRight)
+      (St_1_DriftLeft -> nr_St_1_DriftLeft)(St_1_Right -> nr_St_1_Right)
+      (St_1_Left -> nr_St_1_Left)(St_1_Stop -> nr_St_1_Stop)
+      (St_1_Forward -> nr_St_1_Forward);
+  cnt = count;
+  count = counter(sen0, sen1, sen2, sen3, sen4, beacon, flag);
+  b5 = (v_30 & v_31);
+  v_31 = (sen2 > 700);
+  v_30 = (sen3 < 700);
+  b4 = (v_28 & v_29);
+  v_29 = (sen2 > 700);
+  v_28 = (sen1 < 700);
+  b3 = (sen4 < 700);
+  blacknodedetected = (v_27 < 3000);
+  v_27 = (v_26 + sen4);
+  v_26 = (v_25 + sen3);
+  v_25 = (v_24 + sen2);
+  v_24 = (sen0 + sen1);
+  oasspeed = 40;
+  bspeed = 40;
+  wspeed = 40;
+  switch_condition = (v_21 & v_23);
+  v_23 = (v_22 > 1400);
+  v_22 = (sen0 + sen1);
+  v_21 = (v_19 & v_20);
+  v_20 = (sen4 > 800);
+  v_19 = (sen2 < 700);
+  c5 = (v_17 & v_18);
+  v_18 = (sen2 < 800);
+  v_17 = (sen3 > 900);
+  c4 = (v_15 & v_16);
+  v_16 = (sen2 < 800);
+  v_15 = (sen1 > 900);
+  c3 = (sen4 > 900);
+  c2 = (v_14 > 900);
+  v_14 = (v_13 / 10);
+  v_13 = (sen0 * 18);
+  c1 = (v_12 > 4500);
+  v_12 = (v_11 + sen4);
+  v_11 = (v_10 + sen3);
+  v_10 = (v + sen2);
+  v = (sen0 + sen1);
+  pid = findpid(sen3, sen1)
+tel
+

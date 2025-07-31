@@ -1,0 +1,7 @@
+Jayesh worked on PID Controller, Start, Stop, Turn180 States and Video.
+
+Utkarsh worked on PID Controller, Start, Stop, Turn180 States
+
+Ritika worked on Drift Left, Drift Right, Left and Right States, Start, Stop, Turn180 States
+
+Atul did Simulation, Testing, ReadmMe.txt, and Start, Stop, Turn180 States

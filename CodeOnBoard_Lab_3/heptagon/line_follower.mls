@@ -1,0 +1,181 @@
+type st = St_Stop|St_Right|St_Left|St_Forward|St_DriftRight|St_DriftLeft
+const kp = 3
+const kd = 1
+const ki = 0
+node findpid(sen3 : int; sen1 : int) returns (pid : int)
+var error : int; i : int; d : int; p : int; z : int; error_1 : int; v : bool;
+    v_1 : int; v_2 : int; v_3 : bool; v_4 : int; v_5 : int; v_6 : int;
+    v_7 : int; v_8 : int; v_9 : bool;
+let
+  error_1 = pre error;
+  pid = if v_9 then 15 else ~-(15);
+  v_9 = (z > 0);
+  z = (v_7 + v_8);
+  v_8 = (kd * d);
+  v_7 = (v_5 + v_6);
+  v_6 = (ki * i);
+  v_5 = (kp * p);
+  d = (error - v_4);
+  v_4 = if v_3 then 0 else error_1;
+  v_3 = true fby false;
+  i = if v then 0 else v_2;
+  v_2 = (v_1 + error);
+  v_1 = pre i;
+  v = true fby false;
+  p = error;
+  error = (sen3 - sen1)
+tel
+
+node main(sen0 : int; sen1 : int; sen2 : int; sen3 : int; sen4 : int)
+returns (v_l : int; v_r : int; dir : int)
+var c5 : bool; c4 : bool; c3 : bool; c2 : bool; c1 : bool; pid : int;
+    pnr : bool; nr : bool; r : bool; ns : st; v : int; v_10 : int;
+    v_11 : int; v_12 : int; v_13 : int; v_14 : int; ck : st;
+    v_l_St_Forward : int; v_r_St_Forward : int; dir_St_Forward : int;
+    ns_St_Forward : st; nr_St_Forward : bool; v_l_St_Stop : int;
+    v_r_St_Stop : int; dir_St_Stop : int; ns_St_Stop : st; nr_St_Stop : bool;
+    v_l_St_Left : int; v_r_St_Left : int; dir_St_Left : int; ns_St_Left : st;
+    nr_St_Left : bool; v_l_St_Right : int; v_r_St_Right : int;
+    dir_St_Right : int; ns_St_Right : st; nr_St_Right : bool;
+    v_l_St_DriftLeft : int; v_r_St_DriftLeft : int; dir_St_DriftLeft : int;
+    ns_St_DriftLeft : st; nr_St_DriftLeft : bool; v_l_St_DriftRight : int;
+    v_r_St_DriftRight : int; dir_St_DriftRight : int; ns_St_DriftRight : st;
+    nr_St_DriftRight : bool; v_63 : st; v_64 : bool; v_65 : st; v_66 : bool;
+    v_67 : st; v_68 : bool; v_69 : st; v_70 : bool; v_53 : bool; v_54 : bool;
+    v_55 : st; v_56 : bool; v_57 : st; v_58 : bool; v_59 : st; v_60 : bool;
+    v_61 : st; v_62 : bool; v_45 : st; v_46 : bool; v_47 : st; v_48 : bool;
+    v_49 : st; v_50 : bool; v_51 : st; v_52 : bool; v_35 : st; v_36 : bool;
+    v_37 : st; v_38 : bool; v_39 : st; v_40 : bool; v_41 : st; v_42 : bool;
+    v_43 : st; v_44 : bool; v_25 : st; v_26 : bool; v_27 : st; v_28 : bool;
+    v_29 : st; v_30 : bool; v_31 : st; v_32 : bool; v_33 : st; v_34 : bool;
+    v_15 : st; v_16 : bool; v_17 : st; v_18 : bool; v_19 : st; v_20 : bool;
+    v_21 : st; v_22 : bool; v_23 : st; v_24 : bool;
+let
+  r = pnr;
+  pnr = false fby nr;
+  ck = St_Forward fby ns;
+  dir_St_Forward = 1;
+  v_r_St_Forward = 50;
+  v_l_St_Forward = 50;
+  nr_St_Forward = if (c1 when St_Forward(ck)) then true else v_70;
+  ns_St_Forward = if (c1 when St_Forward(ck)) then St_Stop else v_69;
+  v_70 = if (c2 when St_Forward(ck)) then true else v_68;
+  v_69 = if (c2 when St_Forward(ck)) then St_Left else v_67;
+  v_68 = if (c3 when St_Forward(ck)) then true else v_66;
+  v_67 = if (c3 when St_Forward(ck)) then St_Right else v_65;
+  v_66 = if (c4 when St_Forward(ck)) then true else v_64;
+  v_65 = if (c4 when St_Forward(ck)) then St_DriftRight else v_63;
+  v_64 = if (c5 when St_Forward(ck)) then true else false;
+  v_63 = if (c5 when St_Forward(ck)) then St_DriftLeft else St_Forward;
+  dir_St_Stop = 0;
+  v_r_St_Stop = 0;
+  v_l_St_Stop = 0;
+  nr_St_Stop = if v_54 then true else v_62;
+  ns_St_Stop = if v_54 then St_Left else v_61;
+  v_62 = if (c3 when St_Stop(ck)) then true else v_60;
+  v_61 = if (c3 when St_Stop(ck)) then St_Right else v_59;
+  v_60 = if (c4 when St_Stop(ck)) then true else v_58;
+  v_59 = if (c4 when St_Stop(ck)) then St_DriftRight else v_57;
+  v_58 = if (c5 when St_Stop(ck)) then true else v_56;
+  v_57 = if (c5 when St_Stop(ck)) then St_DriftLeft else v_55;
+  v_56 = if true then true else false;
+  v_55 = if true then St_Forward else St_Stop;
+  v_54 = (v_53 & (c2 when St_Stop(ck)));
+  v_53 = not((c1 when St_Stop(ck)));
+  dir_St_Left = 4;
+  v_r_St_Left = 50;
+  v_l_St_Left = 50;
+  nr_St_Left = if (c1 when St_Left(ck)) then true else v_52;
+  ns_St_Left = if (c1 when St_Left(ck)) then St_Stop else v_51;
+  v_52 = if (c3 when St_Left(ck)) then true else v_50;
+  v_51 = if (c3 when St_Left(ck)) then St_Right else v_49;
+  v_50 = if (c4 when St_Left(ck)) then true else v_48;
+  v_49 = if (c4 when St_Left(ck)) then St_DriftRight else v_47;
+  v_48 = if (c5 when St_Left(ck)) then true else v_46;
+  v_47 = if (c5 when St_Left(ck)) then St_DriftLeft else v_45;
+  v_46 = if true then true else false;
+  v_45 = if true then St_Forward else St_Left;
+  dir_St_Right = 5;
+  v_r_St_Right = 50;
+  v_l_St_Right = 50;
+  nr_St_Right = if (c1 when St_Right(ck)) then true else v_44;
+  ns_St_Right = if (c1 when St_Right(ck)) then St_Stop else v_43;
+  v_44 = if (c2 when St_Right(ck)) then true else v_42;
+  v_43 = if (c2 when St_Right(ck)) then St_Left else v_41;
+  v_42 = if (c3 when St_Right(ck)) then true else v_40;
+  v_41 = if (c3 when St_Right(ck)) then St_Right else v_39;
+  v_40 = if (c4 when St_Right(ck)) then true else v_38;
+  v_39 = if (c4 when St_Right(ck)) then St_DriftRight else v_37;
+  v_38 = if (c5 when St_Right(ck)) then true else v_36;
+  v_37 = if (c5 when St_Right(ck)) then St_DriftLeft else v_35;
+  v_36 = if true then true else false;
+  v_35 = if true then St_Forward else St_Right;
+  dir_St_DriftLeft = 3;
+  v_r_St_DriftLeft = (40 + (pid when St_DriftLeft(ck)));
+  v_l_St_DriftLeft = 0;
+  nr_St_DriftLeft = if (c1 when St_DriftLeft(ck)) then true else v_34;
+  ns_St_DriftLeft = if (c1 when St_DriftLeft(ck)) then St_Stop else v_33;
+  v_34 = if (c2 when St_DriftLeft(ck)) then true else v_32;
+  v_33 = if (c2 when St_DriftLeft(ck)) then St_Left else v_31;
+  v_32 = if (c3 when St_DriftLeft(ck)) then true else v_30;
+  v_31 = if (c3 when St_DriftLeft(ck)) then St_Right else v_29;
+  v_30 = if (c4 when St_DriftLeft(ck)) then true else v_28;
+  v_29 = if (c4 when St_DriftLeft(ck)) then St_DriftRight else v_27;
+  v_28 = if (c5 when St_DriftLeft(ck)) then true else v_26;
+  v_27 = if (c5 when St_DriftLeft(ck)) then St_DriftLeft else v_25;
+  v_26 = if true then true else false;
+  v_25 = if true then St_Forward else St_DriftLeft;
+  dir_St_DriftRight = 2;
+  v_r_St_DriftRight = 0;
+  v_l_St_DriftRight = (40 + (pid when St_DriftRight(ck)));
+  nr_St_DriftRight = if (c1 when St_DriftRight(ck)) then true else v_24;
+  ns_St_DriftRight = if (c1 when St_DriftRight(ck)) then St_Stop else v_23;
+  v_24 = if (c2 when St_DriftRight(ck)) then true else v_22;
+  v_23 = if (c2 when St_DriftRight(ck)) then St_Left else v_21;
+  v_22 = if (c3 when St_DriftRight(ck)) then true else v_20;
+  v_21 = if (c3 when St_DriftRight(ck)) then St_Right else v_19;
+  v_20 = if (c4 when St_DriftRight(ck)) then true else v_18;
+  v_19 = if (c4 when St_DriftRight(ck)) then St_DriftRight else v_17;
+  v_18 = if (c5 when St_DriftRight(ck)) then true else v_16;
+  v_17 = if (c5 when St_DriftRight(ck)) then St_DriftLeft else v_15;
+  v_16 = if true then true else false;
+  v_15 = if true then St_Forward else St_DriftRight;
+  v_l =
+    merge ck
+      (St_DriftRight -> v_l_St_DriftRight)(St_DriftLeft -> v_l_St_DriftLeft)
+      (St_Right -> v_l_St_Right)(St_Left -> v_l_St_Left)
+      (St_Stop -> v_l_St_Stop)(St_Forward -> v_l_St_Forward);
+  v_r =
+    merge ck
+      (St_DriftRight -> v_r_St_DriftRight)(St_DriftLeft -> v_r_St_DriftLeft)
+      (St_Right -> v_r_St_Right)(St_Left -> v_r_St_Left)
+      (St_Stop -> v_r_St_Stop)(St_Forward -> v_r_St_Forward);
+  dir =
+    merge ck
+      (St_DriftRight -> dir_St_DriftRight)(St_DriftLeft -> dir_St_DriftLeft)
+      (St_Right -> dir_St_Right)(St_Left -> dir_St_Left)
+      (St_Stop -> dir_St_Stop)(St_Forward -> dir_St_Forward);
+  ns =
+    merge ck
+      (St_DriftRight -> ns_St_DriftRight)(St_DriftLeft -> ns_St_DriftLeft)
+      (St_Right -> ns_St_Right)(St_Left -> ns_St_Left)(St_Stop -> ns_St_Stop)
+      (St_Forward -> ns_St_Forward);
+  nr =
+    merge ck
+      (St_DriftRight -> nr_St_DriftRight)(St_DriftLeft -> nr_St_DriftLeft)
+      (St_Right -> nr_St_Right)(St_Left -> nr_St_Left)(St_Stop -> nr_St_Stop)
+      (St_Forward -> nr_St_Forward);
+  c5 = (sen3 > 900);
+  c4 = (sen1 > 900);
+  c3 = (sen4 > 900);
+  c2 = (v_14 > 900);
+  v_14 = (v_13 / 10);
+  v_13 = (sen0 * 18);
+  c1 = (v_12 > 4500);
+  v_12 = (v_11 + sen4);
+  v_11 = (v_10 + sen3);
+  v_10 = (v + sen2);
+  v = (sen0 + sen1);
+  pid = findpid(sen3, sen1)
+tel
+
